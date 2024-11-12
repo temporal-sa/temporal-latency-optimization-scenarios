@@ -13,6 +13,6 @@ run_web:
     @echo "Starting web at $PUBLIC_WEB_URL"
     cd web && poetry run python main.py
 
-run_temporal_worker:
-    @echo "Starting Java Worker"
-    cd temporal-java && ENCRYPT_PAYLOADS=$ENCRYPT_PAYLOADS ./gradlew run --console=plain
+run_temporal:
+    @echo "Starting Temporal worker and caller API on $CALLER_API_PORT"
+    cd temporal-java && ./gradlew api --console=plain

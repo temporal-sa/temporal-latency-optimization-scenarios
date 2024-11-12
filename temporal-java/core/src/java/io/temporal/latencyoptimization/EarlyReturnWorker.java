@@ -20,14 +20,18 @@
 package io.temporal.latencyoptimization;
 
 import io.temporal.client.WorkflowClient;
+import io.temporal.latencyoptimization.api.TemporalClient;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
+
+import javax.net.ssl.SSLException;
+import java.io.FileNotFoundException;
 
 public class EarlyReturnWorker {
   private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
 
-  public static void main(String[] args) {
-    WorkflowClient client = EarlyReturnClient.setupWorkflowClient();
+  public static void main(String[] args) throws FileNotFoundException, SSLException {
+    WorkflowClient client = TemporalClient.get();
     startWorker(client);
   }
 

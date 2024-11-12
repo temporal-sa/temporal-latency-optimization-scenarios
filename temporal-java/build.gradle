@@ -51,8 +51,17 @@ application {
     mainClass = 'io.temporal.latencyoptimization.EarlyReturnWorker'
 }
 
+// Original execute task
 task execute(type: JavaExec) {
     mainClass = findProperty("mainClass") ?: application.mainClass
     classpath = sourceSets.main.runtimeClasspath
     args project.hasProperty("arg") ? project.getProperty("arg") : ""
+}
+
+// New task for running the API
+task api(type: JavaExec) {
+    description = 'Runs the API server'
+    group = 'application'
+    mainClass = 'io.temporal.latencyoptimization.api.CallerAPI'
+    classpath = sourceSets.main.runtimeClasspath
 }

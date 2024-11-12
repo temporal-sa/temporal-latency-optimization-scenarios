@@ -1,0 +1,2 @@
+rootProject.name = 'temporal-latency-optimization-scenarios'
+include 'temporal-java'

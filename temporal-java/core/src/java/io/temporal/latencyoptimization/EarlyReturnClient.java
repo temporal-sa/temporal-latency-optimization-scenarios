@@ -20,81 +20,103 @@
 package io.temporal.latencyoptimization;
 
 import io.temporal.client.*;
+import io.temporal.latencyoptimization.api.TemporalClient;
+import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+
+import javax.net.ssl.SSLException;
+import java.io.FileNotFoundException;
 
 public class EarlyReturnClient {
   private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
   private static final String WORKFLOW_ID_PREFIX = "early-return-workflow-";
 
-  public static void main(String[] args) {
-    WorkflowClient client = setupWorkflowClient();
-    runWorkflowWithUpdateWithStart(client);
-  }
-
-  // Set up the WorkflowClient
-  public static WorkflowClient setupWorkflowClient() {
-    WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
-    return WorkflowClient.newInstance(service);
-  }
-
-  // Run workflow using 'updateWithStart'
-  private static void runWorkflowWithUpdateWithStart(WorkflowClient client) {
+  public static void main(String[] args) throws FileNotFoundException, SSLException {
+    WorkflowClient client = TemporalClient.get();
     TransactionRequest txRequest =
-        new TransactionRequest(
-            "Bob", "Alice",
-            1000); // Change this amount to a negative number to have initTransaction fail
+            new TransactionRequest(
+                    "Bob", "Alice",
+                    1000);
+    runWorkflowWithUpdateWithStart(client, txRequest);
+  }
+
+  public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client, TransactionRequest txRequest) {
 
     WorkflowOptions options = buildWorkflowOptions();
     TransactionWorkflow workflow = client.newWorkflowStub(TransactionWorkflow.class, options);
+    String workflowId = options.getWorkflowId();
 
     System.out.println("Starting workflow with UpdateWithStart");
 
     UpdateWithStartWorkflowOperation<TxResult> updateOp =
-        UpdateWithStartWorkflowOperation.newBuilder(workflow::returnInitResult)
-            .setWaitForStage(WorkflowUpdateStage.COMPLETED) // Wait for update to complete
-            .build();
+            UpdateWithStartWorkflowOperation.newBuilder(workflow::returnInitResult)
+                    .setWaitForStage(WorkflowUpdateStage.COMPLETED)
+                    .build();
 
-    TxResult updateResult = null;
+    WorkflowExecutionResult.Builder resultBuilder = new WorkflowExecutionResult.Builder()
+            .workflowId(workflowId);
+
     try {
+      // Start timing for update
+      long updateStartTime = System.nanoTime();
+
       WorkflowUpdateHandle<TxResult> updateHandle =
-          WorkflowClient.updateWithStart(workflow::processTransaction, txRequest, updateOp);
+              WorkflowClient.updateWithStart(workflow::processTransaction, txRequest, updateOp);
+      TxResult updateResult = updateHandle.getResultAsync().get();
 
-      updateResult = updateHandle.getResultAsync().get();
+      // Calculate update latency
+      double updateLatencyMs = (System.nanoTime() - updateStartTime) / 1_000_000.0;
 
       System.out.println(
-          "Workflow initialized with result: "
-              + updateResult.getStatus()
-              + " (transactionId: "
-              + updateResult.getTransactionId()
-              + ")");
+              "Workflow initialized with result: "
+                      + updateResult.getStatus()
+                      + " (transactionId: "
+                      + updateResult.getTransactionId()
+                      + ")");
 
-      TxResult result = WorkflowStub.fromTyped(workflow).getResult(TxResult.class);
+      // Start timing for overall workflow
+      long workflowStartTime = System.nanoTime();
+
+      TxResult workflowResult = WorkflowStub.fromTyped(workflow).getResult(TxResult.class);
+
+      // Calculate workflow latency
+      double workflowLatencyMs = (System.nanoTime() - workflowStartTime) / 1_000_000.0;
+
       System.out.println(
-          "Workflow completed with result: "
-              + result.getStatus()
-              + " (transactionId: "
-              + result.getTransactionId()
-              + ")");
+              "Workflow completed with result: "
+                      + workflowResult.getStatus()
+                      + " (transactionId: "
+                      + workflowResult.getTransactionId()
+                      + ")");
+
+      return resultBuilder
+              .updateResponseLatencyMs(updateLatencyMs)
+              .workflowResponseLatencyMs(workflowLatencyMs)
+              .updateResult(updateResult)
+              .workflowResult(workflowResult)
+              .executionStatus(WorkflowExecutionResult.WorkflowExecutionStatus.COMPLETED)
+              .build();
+
     } catch (Exception e) {
       if (e.getCause() instanceof io.grpc.StatusRuntimeException) {
         io.grpc.StatusRuntimeException sre = (io.grpc.StatusRuntimeException) e.getCause();
-
         System.err.println("Workflow failed with StatusRuntimeException: " + sre.getMessage());
         System.err.println("Cause: " + e.getCause());
 
         if (sre.getStatus().getCode() == io.grpc.Status.Code.PERMISSION_DENIED
-            && sre.getMessage()
+                && sre.getMessage()
                 .contains("ExecuteMultiOperation API is disabled on this namespace")) {
-
-          // Inform the user that UpdateWithStart requires the ExecuteMultiOperation API to be
-          // enabled
           System.err.println(
-              "UpdateWithStart requires the ExecuteMultiOperation API to be enabled on this namespace.");
+                  "UpdateWithStart requires the ExecuteMultiOperation API to be enabled on this namespace.");
         }
       } else {
         System.err.println("Transaction initialization failed: " + e.getMessage());
         System.err.println("Cause: " + e.getCause());
       }
+
+      return resultBuilder
+              .executionStatus(WorkflowExecutionResult.WorkflowExecutionStatus.FAILED)
+              .build();
     }
   }
 
