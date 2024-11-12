@@ -1,0 +1,111 @@
+### Build and Binary Files ###
+**/build/
+**/out/
+dist/
+target/
+bin/
+generated/
+
+### Python ###
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+.eggs/
+.installed.cfg
+.Python
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+MANIFEST
+
+# Testing and Coverage
+.coverage
+.coverage.*
+.hypothesis/
+.nox/
+.pytest_cache/
+.tox/
+coverage.xml
+htmlcov/
+nosetests.xml
+*.cover
+*.py,cover
+cover/
+
+# Virtual Environments
+.env*
+.venv/
+env/
+ENV/
+venv/
+
+### Node.js ###
+node_modules/
+.npm/
+.pnp/
+.pnp.js
+web/node_modules/
+web/static/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+### IDE and Editor Files ###
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+*.iml
+
+# Vim
+.*.swp
+.*.swo
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+### OS Generated Files ###
+.DS_Store
+
+### Project Specific ###
+.github/workflows/SA_TOKEN
+.local/
+setcloudenv.sh
+
+### Security ###
+*.pem
+*.key
+
+### Cache and Temporary Files ###
+.cache/
+.webassets-cache/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.pdm.toml
+.pdm-python
+.pdm-build/
+.pybuilder/
+cython_debug/
+dmypy.json
