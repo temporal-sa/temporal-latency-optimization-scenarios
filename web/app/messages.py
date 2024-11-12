@@ -49,14 +49,11 @@ class TransferInput:
     amount: int
     # scenario: str
     # initialSleepTime: int
-    fromAccount: str
-    toAccount: str
+    sourceAccount: str
+    targetAccount: str
 
 
 @dataclass
-class TransferStatus:
-    progressPercentage: int
-    transferStatus: str
-    workflowStatus: str
-    chargeResult: str
-    approvalTime: int
+class TransactionLatency:
+    latency_earlyreturn_ms: float
+    latency_workflow_ms: float

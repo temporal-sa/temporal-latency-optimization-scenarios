@@ -107,7 +107,7 @@ async def startup():
     # Register shutdown handler
     loop = asyncio.get_event_loop()
     
-    # Register signal handlers - corrected version
+    # Graceful shutdown
     def handle_signal(sig_name):
         """Helper function to properly handle the signal"""
         try:
@@ -202,77 +202,24 @@ async def write_transfers():
     wf_type = data.get('scenario',  DEFAULT_WORKFLOW_TYPE)
     params = TransferInput(
         amount=data.get('amount'),
-        fromAccount=data.get('from_account'),
-        toAccount=data.get('to_account'),
+        sourceAccount=data.get('from_account'),
+        targetAccount=data.get('to_account'),
     )
     print('sending {params}'.format(params=params))
 
+    conn = cfg.get('temporal',{}).get('worker',{})
     handle = await temporal_client.start_workflow(wf_type,
                                                   id=wid,
-                                                  task_queue='MoneyTransfer',
+                                                  task_queue=conn.get('task_queue','LatencyOptimization'),
                                                   arg=params,
                                                   )
 
     return redirect(location='/transfers/{id}?type={wf_type}'.format(id=handle.id, wf_type=wf_type))
 
-@app.route('/approvals/<workflow_id>', methods=['PUT','POST'])
-async def approve(workflow_id):
-    temporal_client = cast(Client, app.clients.temporal)
-    handle = temporal_client.get_workflow_handle(workflow_id)
-    await handle.signal(signal='approveTransfer')
-    return redirect(location=f'/transfers/{workflow_id}')
-
 @app.get('/transfers/<id>')
 async def transfer(id):
     type = request.args.get('type')
     return await render_template(template_name_or_list='transfer.html', id=id, type=type)
-
-@app.get("/sub/<workflow_id>")
-async def sub(workflow_id):
-    if "text/event-stream" not in request.accept_mimetypes:
-        abort(400)
-    
-    @stream_with_context
-    async def async_generator():
-        if workflow_id not in app.sse_connections:
-            app.sse_connections[workflow_id] = set()
-        
-        app.sse_connections[workflow_id].add(async_generator)
-        logger.info(f"New SSE connection for workflow {workflow_id}")
-        
-        try:
-            while not app.shutting_down:  # Check shutdown flag
-                try:
-                    print('querying {workflow_id}'.format(workflow_id=workflow_id))
-                    handle = app.clients.temporal.get_workflow_handle(workflow_id)
-                    state = await handle.query('transferStatus')
-                    print(state)
-                    event = ServerSentEvent(data=json.dumps(state), retry=None, id=None, event=None)
-                    yield event.encode()
-                    await sleep(2)
-                except asyncio.CancelledError:
-                    logger.info(f"SSE connection cancelled for workflow {workflow_id}")
-                    break
-                except Exception as e:
-                    logger.error(f"Error in workflow SSE: {str(e)}")
-                    break
-        finally:
-            if workflow_id in app.sse_connections:
-                app.sse_connections[workflow_id].discard(async_generator)
-                if not app.sse_connections[workflow_id]:
-                    del app.sse_connections[workflow_id]
-            logger.info(f"Closed SSE connection for workflow {workflow_id}")
-
-    response = await make_response(
-        async_generator(),
-        {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Transfer-Encoding': 'chunked',
-        },
-    )
-    response.timeout = None
-    return response
 
 
 @app.get("/sub/list")
@@ -290,17 +237,6 @@ async def sub_list():
                 try:
                     lister = TransferLister(client=app.clients.temporal, temporal_config=cfg)
                     workflows = await lister.list_workflows()
-                    
-                    for workflow in workflows:
-                        print(
-                            f"ID: {workflow.workflow_id}\n"
-                            f"Status: {workflow.workflow_status}\n"
-                            f"Run ID: {workflow.run_id}\n"
-                            f"Type: {workflow.workflow_type}\n"
-                            f"Started: {workflow.start_time}\n"
-                            f"Closed: {workflow.close_time or 'Still running'}\n"
-                            f"Task Queue: {workflow.task_queue}\n"
-                        )
                     
                     state = workflows
                     event = ServerSentEvent(data=json.dumps(state), retry=None, id=None, event=None)

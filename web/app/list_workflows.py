@@ -4,6 +4,7 @@ from typing import List, Optional
 from app.config import get_config
 
 from temporalio.client import Client, WorkflowExecutionStatus
+from app.models import DEFAULT_WORKFLOW_TYPE
 
 
 @dataclass
@@ -74,7 +75,7 @@ class TransferLister:
             )
             async for wf in self.client.list_workflows(
                 f"ExecutionStatus = 'Running' "
-                f"AND WorkflowType STARTS_WITH 'AccountTransferWorkflow' "
+                f"AND WorkflowType STARTS_WITH '{DEFAULT_WORKFLOW_TYPE}' "
                 f"AND StartTime BETWEEN '{one_hour_ago}' AND '{now}'"
             )
         ]
@@ -93,43 +94,9 @@ class TransferLister:
             )
             async for wf in self.client.list_workflows(
                 f"ExecutionStatus != 'Running' "
-                f"AND WorkflowType STARTS_WITH 'AccountTransferWorkflow' "
+                f"AND WorkflowType STARTS_WITH '{DEFAULT_WORKFLOW_TYPE}' "
                 f"AND StartTime BETWEEN '{one_hour_ago}' AND '{now}'"
             )
         ]
 
         return running_workflows + completed_workflows
-
-
-# Example usage
-async def main():
-    # Example temporal config
-    temporal_config = {
-        'connection': {
-            'target': 'localhost:7233',
-            'namespace': 'default'
-        }
-    }
-    
-    client = await Client.connect("localhost:7233")
-    
-    cfg = get_config()
-    lister = TransferLister(client=client, temporal_config=cfg)
-    workflows = await lister.list_workflows()
-    
-    for workflow in workflows:
-        print(
-            f"ID: {workflow.workflow_id}\n"
-            f"Status: {workflow.workflow_status}\n"
-            f"Run ID: {workflow.run_id}\n"
-            f"Type: {workflow.workflow_type}\n"
-            f"Started: {workflow.start_time}\n"
-            f"Closed: {workflow.close_time or 'Still running'}\n"
-            f"Task Queue: {workflow.task_queue}\n"
-            f"URL: {workflow.url}\n"
-        )
-
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())

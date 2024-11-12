@@ -23,7 +23,7 @@ import io.temporal.client.*;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 
 public class EarlyReturnClient {
-  private static final String TASK_QUEUE = "EarlyReturnTaskQueue";
+  private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
   private static final String WORKFLOW_ID_PREFIX = "early-return-workflow-";
 
   public static void main(String[] args) {

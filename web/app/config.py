@@ -8,7 +8,7 @@ load_dotenv()
 def get_config() -> dict:
     web_url = urlparse(os.getenv('PUBLIC_WEB_URL'))
     return {
-        'name': 'Temporal Payments',
+        'name': 'Temporal Latency Optimization',
         'temporal': {
             'connection': {
                 'target': os.getenv('TEMPORAL_CONNECTION_TARGET'),
@@ -19,7 +19,7 @@ def get_config() -> dict:
                 }
             },
             'worker': {
-                'task_queue': os.getenv('TEMPORAL_WORKER_TASK_QUEUE')
+                'task_queue': os.getenv('TEMPORAL_TASK_QUEUE')
             }
         },
         'web': {

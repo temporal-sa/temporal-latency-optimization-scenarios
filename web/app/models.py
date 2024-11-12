@@ -1,10 +1,10 @@
-DEFAULT_WORKFLOW_TYPE = 'AccountTransferWorkflow'
+DEFAULT_WORKFLOW_TYPE = 'TransactionWorkflow'
 SCENARIOS = [
     {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Normal "Happy Path" Execution'},
-    {'id': "AccountTransferWorkflowHumanInLoop", 'label': "Require Human-In-Loop Approval"},
-    {'id': "AccountTransferWorkflowAPIDowntime", 'label': "API Downtime (recover on 5th attempt)"},
-    {'id': "AccountTransferWorkflowRecoverableFailure", 'label': "Bug in Workflow (recoverable failure)",},
-    {'id': "AccountTransferWorkflowInvalidAccount", 'label': "Invalid Account (unrecoverable failure)",},
+    {'id': f"{DEFAULT_WORKFLOW_TYPE}HumanInLoop", 'label': "Require Human-In-Loop Approval"},
+    {'id': f"{DEFAULT_WORKFLOW_TYPE}APIDowntime", 'label': "API Downtime (recover on 5th attempt)"},
+    {'id': f"{DEFAULT_WORKFLOW_TYPE}RecoverableFailure", 'label': "Bug in Workflow (recoverable failure)",},
+    {'id': f"{DEFAULT_WORKFLOW_TYPE}InvalidAccount", 'label': "Invalid Account (unrecoverable failure)",},
 ]
 
 ACCOUNT_TYPES = [

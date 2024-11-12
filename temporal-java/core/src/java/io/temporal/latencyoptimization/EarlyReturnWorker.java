@@ -24,7 +24,7 @@ import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 
 public class EarlyReturnWorker {
-  private static final String TASK_QUEUE = "EarlyReturnTaskQueue";
+  private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
 
   public static void main(String[] args) {
     WorkflowClient client = EarlyReturnClient.setupWorkflowClient();
