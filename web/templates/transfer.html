@@ -24,9 +24,13 @@
                 header.appendChild(subheader)
             }
 
-            const resultsCount = response?.results?.length || 0
-            const totalIterations = response?.iterations || 0
-            subheader.textContent = `${resultsCount} of ${totalIterations} workflow runs`
+            const resultsCount = response?.results?.length || ".."
+            const totalIterations = response?.iterations || ".."
+            if (totalIterations === "..") {
+                subheader.textContent = `Workflow runs in progress...`
+            } else {
+                subheader.textContent = `${resultsCount} of ${totalIterations} workflow runs`
+            }
 
             // Clear existing table content
             const tbody = document.querySelector('#workflow-results')
@@ -68,18 +72,58 @@
                     Math.round(item.workflowResponseLatencyMs) : 'n/a'
 
                 row.innerHTML = `
-                <td class="font-mono">${iteration}</td>
-                <td class="font-mono text-xs">${item.workflowId}</td>
-                <td class="font-mono ${updateLatency !== 'n/a' ? 'text-accent' : 'text-base-content/50'}">
-                    ${updateLatency}
-                </td>
-                <td class="font-mono ${workflowLatency !== 'n/a' ? 'text-secondary' : 'text-base-content/50'}">
-                    ${workflowLatency}
-                </td>
-                <td class="font-mono text-sm">${executionTime}</td>
-            `
+                    <td class="font-mono">${iteration}</td>
+                    <td class="font-mono">
+                        <a href="${item.workflowUrl}" 
+                        class="text-lg link link-primary hover:text-primary-focus hover:underline">
+                            ${item.workflowId}
+                        </a>
+                    </td>
+                    <td class="text-lg font-mono ${updateLatency !== 'n/a' ? 'text-accent' : 'text-base-content/50'}">
+                        ${updateLatency}
+                    </td>
+                    <td class="text-lg font-mono ${workflowLatency !== 'n/a' ? 'text-secondary' : 'text-base-content/50'}">
+                        ${workflowLatency}
+                    </td>
+                    <td class="font-mono">${executionTime}</td>
+                `
                 tbody.appendChild(row)
             })
+
+            // After populating results but before potentially adding the spinner
+            if (response.results.length >= response.iterations) {
+                // Calculate averages
+                const validUpdateLatencies = response.results
+                    .map(item => item.updateResponseLatencyMs)
+                    .filter(lat => lat !== null && lat !== undefined);
+
+                const validWorkflowLatencies = response.results
+                    .map(item => item.workflowResponseLatencyMs)
+                    .filter(lat => lat !== null && lat !== undefined);
+
+                const avgUpdateLatency = validUpdateLatencies.length > 0
+                    ? Math.round(validUpdateLatencies.reduce((a, b) => a + b, 0) / validUpdateLatencies.length)
+                    : 'n/a';
+
+                const avgWorkflowLatency = validWorkflowLatencies.length > 0
+                    ? Math.round(validWorkflowLatencies.reduce((a, b) => a + b, 0) / validWorkflowLatencies.length)
+                    : 'n/a';
+
+                // Add summary row
+                const summaryRow = document.createElement('tr');
+                summaryRow.innerHTML = `
+            <td colspan="2" class="font-mono font-bold text-right">Average Latency:</td>
+            <td class="text-lg font-mono font-bold ${avgUpdateLatency !== 'n/a' ? 'text-warning' : 'text-base-content/50'}">
+                ${avgUpdateLatency}
+            </td>
+            <td class="text-lg font-mono font-bold ${avgWorkflowLatency !== 'n/a' ? 'text-warning' : 'text-base-content/50'}">
+                ${avgWorkflowLatency}
+            </td>
+            <td></td>
+        `;
+                summaryRow.classList.add('bg-base-200/50');
+                tbody.appendChild(summaryRow);
+            }
 
             // Add spinner row if we're still waiting for more results
             if (response.results.length < response.iterations) {
@@ -129,6 +173,10 @@
         </table>
     </div>
 </div>
+<ul class="text-center">
+    <li><a href='/transfers' class='link'>Run another latency test</a></li>
+    <!-- <li><a href='/layout' class='link link-primary'>Layout Debug</a></li> -->
+</ul>
 
 
 {% endblock main %}

@@ -42,6 +42,30 @@ public class ServerInfo {
         return address != null && !address.isEmpty() ? address : "localhost:7233";
     }
 
+    public static String getWebPort() {
+        String webPort = System.getenv("TEMPORAL_CONNECTION_WEB_PORT");
+        return webPort != null && !webPort.isEmpty() ? webPort : "8080";
+    }
+
+    public static String getNamespaceUrl() {
+        String address = getAddress();
+        String namespace = getNamespace();
+
+        if (address.toLowerCase().contains("localhost")) {
+            String webPort = getWebPort();
+            return String.format("http://localhost:%s/namespaces/%s", webPort, namespace);
+        }
+
+        return String.format("https://cloud.temporal.io/namespaces/%s", namespace);
+    }
+
+    public static String getWorkflowUrl(String workflowId) {
+        if (workflowId == null || workflowId.isEmpty()) {
+            throw new IllegalArgumentException("Workflow ID cannot be null or empty");
+        }
+        return String.format("%s/workflows/%s", getNamespaceUrl(), workflowId);
+    }
+
     public static String getTaskqueue() {
         String taskqueue = System.getenv("TEMPORAL_TASK_QUEUE");
         return taskqueue != null && !taskqueue.isEmpty() ? taskqueue : "MoneyTransferJava";

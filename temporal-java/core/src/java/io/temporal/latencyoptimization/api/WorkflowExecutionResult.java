@@ -12,6 +12,7 @@ public class WorkflowExecutionResult {
     private final TxResult workflowResult;
     private final String executionTimestamp;
     private final WorkflowExecutionStatus executionStatus;
+    private final String workflowUrl;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public WorkflowExecutionResult(
@@ -29,6 +30,7 @@ public class WorkflowExecutionResult {
         this.workflowResult = workflowResult;
         this.executionTimestamp = executionTimestamp;
         this.executionStatus = executionStatus;
+        this.workflowUrl = ServerInfo.getWorkflowUrl(workflowId);
     }
 
     @JsonProperty("workflowId")
@@ -64,6 +66,11 @@ public class WorkflowExecutionResult {
     @JsonProperty("executionStatus")
     public WorkflowExecutionStatus getExecutionStatus() {
         return executionStatus;
+    }
+
+    @JsonProperty("workflowUrl")
+    public String getWorkflowUrl() {
+        return workflowUrl;
     }
 
     // Builder pattern for easier object creation
@@ -128,18 +135,17 @@ public class WorkflowExecutionResult {
     public enum WorkflowExecutionStatus {
         COMPLETED,
         FAILED,
-        TIMEOUT,
-        CANCELLED
     }
 
     @Override
     public String toString() {
         return String.format(
-                "WorkflowExecutionResult{workflowId='%s', updateLatency=%.2fms, workflowLatency=%.2fms, status=%s}",
+                "WorkflowExecutionResult{workflowId='%s', updateLatency=%.2fms, workflowLatency=%.2fms, status=%s, url='%s'}",
                 workflowId,
                 updateResponseLatencyMs,
                 workflowResponseLatencyMs,
-                executionStatus
+                executionStatus,
+                workflowUrl
         );
     }
 }

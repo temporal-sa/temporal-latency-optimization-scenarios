@@ -109,3 +109,11 @@ setcloudenv.sh
 .pybuilder/
 cython_debug/
 dmypy.json
+
+### Java
+*.class
+*.jar
+*.war
+*.ear
+.gradle
+build/
