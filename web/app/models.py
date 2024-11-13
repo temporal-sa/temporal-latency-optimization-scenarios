@@ -1,10 +1,7 @@
-DEFAULT_WORKFLOW_TYPE = 'TransactionWorkflow'
+DEFAULT_WORKFLOW_TYPE = 'UpdateWithStartRegularActivities'
 SCENARIOS = [
     {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Update-With-Start (regular actvities)'},
-    {'id': f"{DEFAULT_WORKFLOW_TYPE}HumanInLoop", 'label': "Require Human-In-Loop Approval"},
-    {'id': f"{DEFAULT_WORKFLOW_TYPE}APIDowntime", 'label': "API Downtime (recover on 5th attempt)"},
-    {'id': f"{DEFAULT_WORKFLOW_TYPE}RecoverableFailure", 'label': "Bug in Workflow (recoverable failure)",},
-    {'id': f"{DEFAULT_WORKFLOW_TYPE}InvalidAccount", 'label': "Invalid Account (unrecoverable failure)",},
+    {'id': "UpdateWithStartLocalActivities", 'label': "Update-With-Start (local activities)"},
 ]
 
 ACCOUNT_TYPES = [

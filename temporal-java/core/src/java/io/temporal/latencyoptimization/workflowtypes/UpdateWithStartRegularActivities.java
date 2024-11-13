@@ -17,14 +17,16 @@
  *  permissions and limitations under the License.
  */
 
-package io.temporal.latencyoptimization;
+package io.temporal.latencyoptimization.workflowtypes;
 
+import io.temporal.latencyoptimization.TransactionRequest;
+import io.temporal.latencyoptimization.TxResult;
 import io.temporal.workflow.UpdateMethod;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 
 @WorkflowInterface
-public interface TransactionWorkflow {
+public interface UpdateWithStartRegularActivities {
   @WorkflowMethod
   TxResult processTransaction(TransactionRequest txRequest);
 

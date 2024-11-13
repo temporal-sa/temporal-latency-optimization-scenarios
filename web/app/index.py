@@ -17,9 +17,8 @@ from temporalio.service import RPCError
 from app.clients import get_clients
 from app.config import get_config
 from app.messages import TransferInput
-from app.models import DEFAULT_WORKFLOW_TYPE
 from app.views import get_transfer_money_form, ServerSentEvent
-from app.list_workflows import TransferLister
+from app.models import DEFAULT_WORKFLOW_TYPE
 
 from aiohttp import ClientSession
 
@@ -297,48 +296,6 @@ async def sub(workflow_id):
                     yield error_event.encode()
 
                 await sleep(2)
-
-    response = await make_response(
-        async_generator(),
-        {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Transfer-Encoding': 'chunked',
-        },
-    )
-    response.timeout = None
-    return response
-
-
-@app.get("/sub/list")
-async def sub_list():
-    if "text/event-stream" not in request.accept_mimetypes:
-        abort(400)
-    
-    @stream_with_context
-    async def async_generator():
-        app.list_connections.add(async_generator)
-        logger.info("New SSE connection for workflow list")
-        
-        try:
-            while not app.shutting_down:  # Check shutdown flag
-                try:
-                    lister = TransferLister(client=app.clients.temporal, temporal_config=cfg)
-                    workflows = await lister.list_workflows()
-                    
-                    state = workflows
-                    event = ServerSentEvent(data=json.dumps(state), retry=None, id=None, event=None)
-                    yield event.encode()
-                    await sleep(2)
-                except asyncio.CancelledError:
-                    logger.info("SSE list connection cancelled")
-                    break
-                except Exception as e:
-                    logger.error(f"Error in list SSE: {str(e)}")
-                    break
-        finally:
-            app.list_connections.discard(async_generator)
-            logger.info("Closed SSE connection for workflow list")
 
     response = await make_response(
         async_generator(),

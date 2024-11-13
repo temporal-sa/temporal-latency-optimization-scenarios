@@ -6,7 +6,7 @@ import io.temporal.latencyoptimization.EarlyReturnClient;
 import io.temporal.latencyoptimization.TransactionRequest;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
-import io.temporal.latencyoptimization.TransactionWorkflowImpl;
+import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivitiesImpl;
 import io.temporal.latencyoptimization.TransactionActivitiesImpl;
 
 import javax.net.ssl.SSLException;
@@ -30,7 +30,7 @@ public class CallerAPI {
         this.resultsStore = new WorkflowResultsStore();
 
         // Register workflow and activities
-        worker.registerWorkflowImplementationTypes(TransactionWorkflowImpl.class);
+        worker.registerWorkflowImplementationTypes(UpdateWithStartRegularActivitiesImpl.class);
         worker.registerActivitiesImplementations(new TransactionActivitiesImpl());
     }
 

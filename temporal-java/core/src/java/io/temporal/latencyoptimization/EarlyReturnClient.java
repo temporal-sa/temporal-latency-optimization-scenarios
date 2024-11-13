@@ -22,7 +22,7 @@ package io.temporal.latencyoptimization;
 import io.temporal.client.*;
 import io.temporal.latencyoptimization.api.TemporalClient;
 import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
-import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivities;
 
 import javax.net.ssl.SSLException;
 import java.io.FileNotFoundException;
@@ -45,7 +45,7 @@ public class EarlyReturnClient {
                                                                          TransactionRequest txRequest) {
 
         WorkflowOptions options = buildWorkflowOptions(id);
-        TransactionWorkflow workflow = client.newWorkflowStub(TransactionWorkflow.class, options);
+        UpdateWithStartRegularActivities workflow = client.newWorkflowStub(UpdateWithStartRegularActivities.class, options);
         String workflowId = options.getWorkflowId();
 
         System.out.println("Starting workflow with UpdateWithStart");

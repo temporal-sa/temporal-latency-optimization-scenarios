@@ -17,16 +17,20 @@
  *  permissions and limitations under the License.
  */
 
-package io.temporal.latencyoptimization;
+package io.temporal.latencyoptimization.workflowtypes;
 
 import io.temporal.activity.ActivityOptions;
+import io.temporal.latencyoptimization.Transaction;
+import io.temporal.latencyoptimization.TransactionActivities;
+import io.temporal.latencyoptimization.TransactionRequest;
+import io.temporal.latencyoptimization.TxResult;
 import io.temporal.workflow.Workflow;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransactionWorkflowImpl implements TransactionWorkflow {
-  private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowImpl.class);
+public class UpdateWithStartRegularActivitiesImpl implements UpdateWithStartRegularActivities {
+  private static final Logger log = LoggerFactory.getLogger(UpdateWithStartRegularActivitiesImpl.class);
   private final TransactionActivities activities =
       Workflow.newActivityStub(
           TransactionActivities.class,
