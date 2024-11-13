@@ -8,18 +8,18 @@ import java.util.stream.Collectors;
 public class WorkflowResultsStore {
     private final ConcurrentHashMap<String, WorkflowResponse> responses = new ConcurrentHashMap<>();
 
-    public void addWorkflowRun(String workflowId, int iterations, WorkflowExecutionResult result) {
+    public void addWorkflowRun(String workflowId, int iterations, String workflowType, WorkflowExecutionResult result) {
         responses.compute(workflowId, (key, existingResponse) -> {
             if (existingResponse == null) {
                 // Create new response with initial result
                 List<WorkflowExecutionResult> results = new ArrayList<>();
                 results.add(result);
-                return new WorkflowResponse(iterations, workflowId, results);
+                return new WorkflowResponse(iterations, workflowType, workflowId, results);
             } else {
                 // Add to existing results
                 List<WorkflowExecutionResult> updatedResults = new ArrayList<>(existingResponse.getResults());
                 updatedResults.add(result);
-                return new WorkflowResponse(iterations, workflowId, updatedResults);
+                return new WorkflowResponse(iterations, workflowType, workflowId, updatedResults);
             }
         });
     }

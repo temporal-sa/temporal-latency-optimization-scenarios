@@ -115,7 +115,8 @@ public class CallerAPI {
                 );
 
                 // Store each result
-                callerAPI.resultsStore.addWorkflowRun(request.getId(), request.getIterations(), result);
+                callerAPI.resultsStore.addWorkflowRun(request.getId(), request.getIterations(),
+                        request.getWf_type(), result);
                 results.add(result);
             }
 
