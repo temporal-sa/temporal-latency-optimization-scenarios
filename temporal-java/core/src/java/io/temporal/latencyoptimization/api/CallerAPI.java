@@ -143,17 +143,35 @@ public class CallerAPI {
                         request.getParams().getAmount()
                 );
 
+                WorkflowExecutionResult result = null;
+
                 String workflowId = request.getId() + "-iteration-" + i;
                 String wfType = request.getWf_type();
 
                 EarlyReturnClient earlyReturnClient = new EarlyReturnClient();
-                WorkflowExecutionResult result = earlyReturnClient.runWorkflowWithUpdateWithStart(
-                        callerAPI.client,
-                        wfType,
-                        workflowId,
-                        txRequest,
-                        callerAPI.serverInfo
-                );
+
+                switch (wfType) {
+                    case "UpdateWithStartRegularActivities":
+                        result = earlyReturnClient.runWorkflowWithUpdateWithStart(
+                                callerAPI.client,
+                                wfType,
+                                workflowId,
+                                txRequest,
+                                callerAPI.serverInfo
+                        );
+                        break;
+                    case "UpdateWithStartLocalActivities":
+                        result = earlyReturnClient.runWorkflowWithUpdateWithStartLocal(
+                                callerAPI.client,
+                                wfType,
+                                workflowId,
+                                txRequest,
+                                callerAPI.serverInfo
+                        );
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid workflow type: " + wfType);
+                }
 
                 // Store each result
                 callerAPI.resultsStore.addWorkflowRun(request.getId(), request.getIterations(),

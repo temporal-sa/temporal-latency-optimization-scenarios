@@ -53,34 +53,20 @@ public class EarlyReturnClient {
 
         // Map workflow types to their respective classes
         Class<?> workflowClass;
-        switch (wfType) {
-            case "UpdateWithStartRegularActivities":
-                workflowClass = UpdateWithStartRegularActivities.class;
-                break;
-            case "UpdateWithStartLocalActivities":
-                workflowClass = UpdateWithStartLocalActivities.class;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid workflow type: " + wfType);
-        }
+
 
         System.out.println("Starting workflow with UpdateWithStart");
 
         // Create the workflow stub dynamically based on workflowClass
-        Object workflowStub = client.newWorkflowStub(workflowClass, options);
+        UpdateWithStartRegularActivities workflow = client.newWorkflowStub(UpdateWithStartRegularActivities.class, options);
 
         // Prepare the Update-With-Start operation
-        UpdateWithStartWorkflowOperation<TxResult> updateOp = UpdateWithStartWorkflowOperation.<TxResult>newBuilder(() -> {
-                    try {
-                        // Use reflection to call `returnInitResult` method on the workflowStub
-                        return (TxResult) workflowClass.getMethod("returnInitResult", TransactionRequest.class)
-                                .invoke(workflowStub, txRequest);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to invoke returnInitResult: " + e.getMessage(), e);
-                    }
-                })
-                .setWaitForStage(WorkflowUpdateStage.COMPLETED)
-                .build();
+        UpdateWithStartWorkflowOperation<TxResult> updateOp =
+                UpdateWithStartWorkflowOperation.newBuilder(workflow::returnInitResult)
+                        .setWaitForStage(WorkflowUpdateStage.COMPLETED) // Wait for update to complete
+                        .build();
+
+        TxResult updateResult = null;
 
         WorkflowExecutionResult.Builder resultBuilder = new WorkflowExecutionResult.Builder()
                 .workflowId(workflowId)
@@ -90,17 +76,10 @@ public class EarlyReturnClient {
             // Start timing for overall workflow
             long startTime = System.nanoTime();
 
-            // Reflectively call `processTransaction` on the workflow stub
-            TxResult updateResult;
-            try {
-                updateResult = (TxResult) workflowClass.getMethod("processTransaction", TransactionRequest.class)
-                        .invoke(workflowStub, txRequest);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to invoke processTransaction: " + e.getMessage(), e);
-            }
+            WorkflowUpdateHandle<TxResult> updateHandle =
+                    WorkflowClient.updateWithStart(workflow::processTransaction, txRequest, updateOp);
 
-            // Calculate update latency
-            double updateLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
+            updateResult = updateHandle.getResultAsync().get();
 
             System.out.println(
                     "Workflow initialized with result: "
@@ -109,7 +88,115 @@ public class EarlyReturnClient {
                             + updateResult.getTransactionId()
                             + ")");
 
-            TxResult workflowResult = WorkflowStub.fromTyped(workflowStub).getResult(TxResult.class);
+            // Calculate update latency
+            double updateLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
+
+            TxResult workflowResult = WorkflowStub.fromTyped(workflow).getResult(TxResult.class);
+            System.out.println(
+                    "Workflow completed with result: "
+                            + workflowResult.getStatus()
+                            + " (transactionId: "
+                            + workflowResult.getTransactionId()
+                            + ")");
+
+            // Calculate workflow latency
+            double workflowLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
+
+            System.out.println(
+                    "Workflow completed with result: "
+                            + workflowResult.getStatus()
+                            + " (transactionId: "
+                            + workflowResult.getTransactionId()
+                            + ")");
+
+            return resultBuilder
+                    .updateResponseLatencyMs(updateLatencyMs)
+                    .workflowResponseLatencyMs(workflowLatencyMs)
+                    .updateResult(updateResult)
+                    .workflowResult(workflowResult)
+                    .executionStatus(WorkflowExecutionResult.WorkflowExecutionStatus.COMPLETED)
+                    .build();
+
+        } catch (Exception e) {
+            if (e.getCause() instanceof io.grpc.StatusRuntimeException) {
+                io.grpc.StatusRuntimeException sre = (io.grpc.StatusRuntimeException) e.getCause();
+                System.err.println("Workflow failed with StatusRuntimeException: " + sre.getMessage());
+                System.err.println("Cause: " + e.getCause());
+
+                if (sre.getStatus().getCode() == io.grpc.Status.Code.PERMISSION_DENIED
+                        && sre.getMessage()
+                        .contains("ExecuteMultiOperation API is disabled on this namespace")) {
+                    System.err.println(
+                            "UpdateWithStart requires the ExecuteMultiOperation API to be enabled on this namespace.");
+                }
+            } else {
+                System.err.println("Transaction initialization failed: " + e.getMessage());
+                System.err.println("Cause: " + e.getCause());
+            }
+
+            return resultBuilder
+                    .executionStatus(WorkflowExecutionResult.WorkflowExecutionStatus.FAILED)
+                    .build();
+        }
+    }
+
+    // TODO: Fix lots of duplicate code shared with the above method
+    public static WorkflowExecutionResult runWorkflowWithUpdateWithStartLocal(WorkflowClient client,
+                                                                         String wfType,
+                                                                         String id,
+                                                                         TransactionRequest txRequest,
+                                                                         ServerInfo serverInfo) {
+
+        WorkflowOptions options = buildWorkflowOptions(id);
+        String workflowId = options.getWorkflowId();
+
+        // Map workflow types to their respective classes
+        Class<?> workflowClass;
+
+
+        System.out.println("Starting workflow with UpdateWithStart");
+
+        // Create the workflow stub dynamically based on workflowClass
+        UpdateWithStartLocalActivities workflow = client.newWorkflowStub(UpdateWithStartLocalActivities.class, options);
+
+        // Prepare the Update-With-Start operation
+        UpdateWithStartWorkflowOperation<TxResult> updateOp =
+                UpdateWithStartWorkflowOperation.newBuilder(workflow::returnInitResult)
+                        .setWaitForStage(WorkflowUpdateStage.COMPLETED) // Wait for update to complete
+                        .build();
+
+        TxResult updateResult = null;
+
+        WorkflowExecutionResult.Builder resultBuilder = new WorkflowExecutionResult.Builder()
+                .workflowId(workflowId)
+                .workflowUrl(serverInfo.getWorkflowUrl(workflowId));
+
+        try {
+            // Start timing for overall workflow
+            long startTime = System.nanoTime();
+
+            WorkflowUpdateHandle<TxResult> updateHandle =
+                    WorkflowClient.updateWithStart(workflow::processTransaction, txRequest, updateOp);
+
+            updateResult = updateHandle.getResultAsync().get();
+
+            System.out.println(
+                    "Workflow initialized with result: "
+                            + updateResult.getStatus()
+                            + " (transactionId: "
+                            + updateResult.getTransactionId()
+                            + ")");
+
+            // Calculate update latency
+            double updateLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
+
+            TxResult workflowResult = WorkflowStub.fromTyped(workflow).getResult(TxResult.class);
+            System.out.println(
+                    "Workflow completed with result: "
+                            + workflowResult.getStatus()
+                            + " (transactionId: "
+                            + workflowResult.getTransactionId()
+                            + ")");
 
             // Calculate workflow latency
             double workflowLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
