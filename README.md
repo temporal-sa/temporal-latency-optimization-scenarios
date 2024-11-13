@@ -14,6 +14,8 @@ poetry install
 poetry shell
 ```
 
+Copy `.env.template` to `.env` and update the values as needed.
+
 Run the web server:
 ```
 just run_web
