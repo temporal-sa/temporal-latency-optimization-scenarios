@@ -214,8 +214,9 @@ async def write_transfers():
         amount=data.get('amount'),
         sourceAccount=data.get('from_account'),
         targetAccount=data.get('to_account'),
+        iterations=data.get('iterations'),
     )
-    iterations = 5
+
     print('sending {params}'.format(params=params))
     conn = cfg.get('temporal',{}).get('worker',{})
     task_queue=conn.get('task_queue','LatencyOptimization')
@@ -232,7 +233,7 @@ async def write_transfers():
         },
         "wf_type": wf_type,
         "task_queue": task_queue,
-        "iterations": iterations
+        "iterations": params.iterations
     }
     
     asyncio.create_task(send_workflow_request(payload, api_port))
@@ -274,8 +275,8 @@ async def sub(workflow_id):
                             )
                             yield event.encode()
                         else:
-                            error_text = await response.text()
-                            print(f"Error getting workflow data: {error_text}")
+                            # error_text = await response.text()
+                            # print(f"Error getting workflow data: {error_text}")
                             # Optionally send error event
                             error_event = ServerSentEvent(
                                 data=json.dumps({"error": "Failed to fetch workflow data"}),

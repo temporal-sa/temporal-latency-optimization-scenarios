@@ -51,6 +51,7 @@ class TransferInput:
     # initialSleepTime: int
     sourceAccount: str
     targetAccount: str
+    iterations: int
 
 
 @dataclass

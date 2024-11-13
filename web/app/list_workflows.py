@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
-from app.config import get_config
+# from app.config import get_config
 
 from temporalio.client import Client, WorkflowExecutionStatus
 from app.models import DEFAULT_WORKFLOW_TYPE
