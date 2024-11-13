@@ -4,6 +4,8 @@ import io.javalin.Javalin;
 import io.temporal.client.WorkflowClient;
 import io.temporal.latencyoptimization.EarlyReturnClient;
 import io.temporal.latencyoptimization.TransactionRequest;
+import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivities;
+import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivitiesImpl;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivitiesImpl;
@@ -30,7 +32,8 @@ public class CallerAPI {
         this.resultsStore = new WorkflowResultsStore();
 
         // Register workflow and activities
-        worker.registerWorkflowImplementationTypes(UpdateWithStartRegularActivitiesImpl.class);
+        worker.registerWorkflowImplementationTypes(UpdateWithStartRegularActivitiesImpl.class,
+                UpdateWithStartLocalActivitiesImpl.class);
         worker.registerActivitiesImplementations(new TransactionActivitiesImpl());
     }
 
@@ -106,10 +109,12 @@ public class CallerAPI {
                 );
 
                 String workflowId = request.getId() + "-iteration-" + i;
+                String wfType = request.getWf_type();
 
                 EarlyReturnClient earlyReturnClient = new EarlyReturnClient();
                 WorkflowExecutionResult result = earlyReturnClient.runWorkflowWithUpdateWithStart(
                         callerAPI.client,
+                        wfType,
                         workflowId,
                         txRequest
                 );

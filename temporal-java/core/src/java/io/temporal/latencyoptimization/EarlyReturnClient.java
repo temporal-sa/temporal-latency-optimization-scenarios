@@ -23,6 +23,7 @@ import io.temporal.client.*;
 import io.temporal.latencyoptimization.api.TemporalClient;
 import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivities;
+import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivities;
 
 import javax.net.ssl.SSLException;
 import java.io.FileNotFoundException;
@@ -31,43 +32,72 @@ public class EarlyReturnClient {
     private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
     private static final String WORKFLOW_ID_PREFIX = "early-return-workflow-";
 
-    public static void main(String[] args) throws FileNotFoundException, SSLException {
-        WorkflowClient client = TemporalClient.get();
-        TransactionRequest txRequest =
-                new TransactionRequest(
-                        "Bob", "Alice",
-                        1000);
-        runWorkflowWithUpdateWithStart(client, "early-return", txRequest);
-    }
+//    public static void main(String[] args) throws FileNotFoundException, SSLException {
+//        WorkflowClient client = TemporalClient.get();
+//        TransactionRequest txRequest =
+//                new TransactionRequest(
+//                        "Bob", "Alice",
+//                        1000);
+//        runWorkflowWithUpdateWithStart(client, "early-return", txRequest);
+//    }
 
     public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client,
+                                                                         String wfType,
                                                                          String id,
                                                                          TransactionRequest txRequest) {
 
         WorkflowOptions options = buildWorkflowOptions(id);
-        UpdateWithStartRegularActivities workflow = client.newWorkflowStub(UpdateWithStartRegularActivities.class, options);
         String workflowId = options.getWorkflowId();
+
+        // Map workflow types to their respective classes
+        Class<?> workflowClass;
+        switch (wfType) {
+            case "UpdateWithStartRegularActivities":
+                workflowClass = UpdateWithStartRegularActivities.class;
+                break;
+            case "UpdateWithStartLocalActivities":
+                workflowClass = UpdateWithStartLocalActivities.class;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid workflow type: " + wfType);
+        }
 
         System.out.println("Starting workflow with UpdateWithStart");
 
-        UpdateWithStartWorkflowOperation<TxResult> updateOp =
-                UpdateWithStartWorkflowOperation.newBuilder(workflow::returnInitResult)
-                        .setWaitForStage(WorkflowUpdateStage.COMPLETED)
-                        .build();
+        // Create the workflow stub dynamically based on workflowClass
+        Object workflowStub = client.newWorkflowStub(workflowClass, options);
+
+        // Prepare the Update-With-Start operation
+        UpdateWithStartWorkflowOperation<TxResult> updateOp = UpdateWithStartWorkflowOperation.<TxResult>newBuilder(() -> {
+                    try {
+                        // Use reflection to call `returnInitResult` method on the workflowStub
+                        return (TxResult) workflowClass.getMethod("returnInitResult", TransactionRequest.class)
+                                .invoke(workflowStub, txRequest);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to invoke returnInitResult: " + e.getMessage(), e);
+                    }
+                })
+                .setWaitForStage(WorkflowUpdateStage.COMPLETED)
+                .build();
 
         WorkflowExecutionResult.Builder resultBuilder = new WorkflowExecutionResult.Builder()
                 .workflowId(workflowId);
 
         try {
-            // Start timing for update
-            long updateStartTime = System.nanoTime();
+            // Start timing for overall workflow
+            long startTime = System.nanoTime();
 
-            WorkflowUpdateHandle<TxResult> updateHandle =
-                    WorkflowClient.updateWithStart(workflow::processTransaction, txRequest, updateOp);
-            TxResult updateResult = updateHandle.getResultAsync().get();
+            // Reflectively call `processTransaction` on the workflow stub
+            TxResult updateResult;
+            try {
+                updateResult = (TxResult) workflowClass.getMethod("processTransaction", TransactionRequest.class)
+                        .invoke(workflowStub, txRequest);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to invoke processTransaction: " + e.getMessage(), e);
+            }
 
             // Calculate update latency
-            double updateLatencyMs = (System.nanoTime() - updateStartTime) / 1_000_000.0;
+            double updateLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
 
             System.out.println(
                     "Workflow initialized with result: "
@@ -76,13 +106,10 @@ public class EarlyReturnClient {
                             + updateResult.getTransactionId()
                             + ")");
 
-            // Start timing for overall workflow
-            long workflowStartTime = System.nanoTime();
-
-            TxResult workflowResult = WorkflowStub.fromTyped(workflow).getResult(TxResult.class);
+            TxResult workflowResult = WorkflowStub.fromTyped(workflowStub).getResult(TxResult.class);
 
             // Calculate workflow latency
-            double workflowLatencyMs = (System.nanoTime() - workflowStartTime) / 1_000_000.0;
+            double workflowLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
 
             System.out.println(
                     "Workflow completed with result: "

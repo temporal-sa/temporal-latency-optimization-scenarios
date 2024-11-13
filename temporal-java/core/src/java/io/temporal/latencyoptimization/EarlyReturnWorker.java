@@ -21,6 +21,7 @@ package io.temporal.latencyoptimization;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.latencyoptimization.api.TemporalClient;
+import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivities;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivitiesImpl;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
@@ -40,7 +41,8 @@ public class EarlyReturnWorker {
     WorkerFactory factory = WorkerFactory.newInstance(client);
     Worker worker = factory.newWorker(TASK_QUEUE);
 
-    worker.registerWorkflowImplementationTypes(UpdateWithStartRegularActivitiesImpl.class);
+    worker.registerWorkflowImplementationTypes(UpdateWithStartRegularActivitiesImpl.class,
+            UpdateWithStartLocalActivities.class);
     worker.registerActivitiesImplementations(new TransactionActivitiesImpl());
 
     factory.start();
