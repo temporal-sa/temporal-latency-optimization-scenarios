@@ -10,6 +10,6 @@ poetry shell
 
 Run the web server:
 ```
-just codegen
 just run_web
+just run_temporal
 ```

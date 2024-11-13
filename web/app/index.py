@@ -22,6 +22,8 @@ from app.models import DEFAULT_WORKFLOW_TYPE
 from app.views import get_transfer_money_form, ServerSentEvent
 from app.list_workflows import TransferLister
 
+from aiohttp import ClientSession
+
 logger = getLogger(__name__)
 
 class CustomQuart(Quart):
@@ -194,9 +196,16 @@ async def get_transfers():
     return await render_template(template_name_or_list='index.html', form=form)
 
 
+# ensures that the workflow is started before the response is sent
+async def send_workflow_request(payload, api_port):
+    async with ClientSession() as session:
+        await session.post(
+            f'http://localhost:{api_port}/runWorkflow',
+            json=payload
+        )
+
 @app.route('/transfers',methods=['POST','PUT'])
 async def write_transfers():
-    temporal_client = cast(Client, app.clients.temporal)
     data = await request.form
     wid = data.get('id','transfer-{id}'.format(id=secrets.choice(string.ascii_lowercase + string.digits)))
     wf_type = data.get('scenario',  DEFAULT_WORKFLOW_TYPE)
@@ -205,21 +214,98 @@ async def write_transfers():
         sourceAccount=data.get('from_account'),
         targetAccount=data.get('to_account'),
     )
+    iterations = 5
     print('sending {params}'.format(params=params))
-
     conn = cfg.get('temporal',{}).get('worker',{})
-    handle = await temporal_client.start_workflow(wf_type,
-                                                  id=wid,
-                                                  task_queue=conn.get('task_queue','LatencyOptimization'),
-                                                  arg=params,
-                                                  )
-
-    return redirect(location='/transfers/{id}?type={wf_type}'.format(id=handle.id, wf_type=wf_type))
+    task_queue=conn.get('task_queue','LatencyOptimization')
+    api = cfg.get('temporal',{}).get('api',{})
+    api_port=api.get('port',7070)
+    
+    # Create payload for POST request
+    payload = {
+        "id": wid,
+        "params": {
+            "amount": params.amount,
+            "sourceAccount": params.sourceAccount,
+            "targetAccount": params.targetAccount
+        },
+        "wf_type": wf_type,
+        "task_queue": task_queue,
+        "iterations": iterations
+    }
+    
+    asyncio.create_task(send_workflow_request(payload, api_port))
+    return redirect(
+        location=f'/transfers/{payload["id"]}?type={wf_type}'
+    )
 
 @app.get('/transfers/<id>')
 async def transfer(id):
     type = request.args.get('type')
     return await render_template(template_name_or_list='transfer.html', id=id, type=type)
+
+
+@app.get("/sub/<workflow_id>")
+async def sub(workflow_id):
+    if "text/event-stream" not in request.accept_mimetypes:
+        abort(400)
+
+    api = cfg.get('temporal', {}).get('api', {})
+    api_port = api.get('port', 7070)
+
+    @stream_with_context
+    async def async_generator():
+        async with ClientSession() as session:
+            while True:
+                print('querying workflow_id prefix: {workflow_id}'.format(workflow_id=workflow_id))
+                
+                try:
+                    async with session.get(
+                        f'http://localhost:{api_port}/workflows/search?prefix={workflow_id}'
+                    ) as response:
+                        if response.status == 200:
+                            workflow_results = await response.json()
+                            event = ServerSentEvent(
+                                data=json.dumps(workflow_results),
+                                retry=None,
+                                id=None,
+                                event=None
+                            )
+                            yield event.encode()
+                        else:
+                            error_text = await response.text()
+                            print(f"Error getting workflow data: {error_text}")
+                            # Optionally send error event
+                            error_event = ServerSentEvent(
+                                data=json.dumps({"error": "Failed to fetch workflow data"}),
+                                retry=None,
+                                id=None,
+                                event=None
+                            )
+                            yield error_event.encode()
+                except Exception as e:
+                    print(f"Exception while fetching workflow data: {e}")
+                    # Optionally send error event
+                    error_event = ServerSentEvent(
+                        data=json.dumps({"error": str(e)}),
+                        retry=None,
+                        id=None,
+                        event=None
+                    )
+                    yield error_event.encode()
+
+                await sleep(2)
+
+    response = await make_response(
+        async_generator(),
+        {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Transfer-Encoding': 'chunked',
+        },
+    )
+    response.timeout = None
+    return response
 
 
 @app.get("/sub/list")

@@ -20,6 +20,9 @@ def get_config() -> dict:
             },
             'worker': {
                 'task_queue': os.getenv('TEMPORAL_TASK_QUEUE')
+            },
+            'api': {
+                'port': os.getenv('CALLER_API_PORT')
             }
         },
         'web': {

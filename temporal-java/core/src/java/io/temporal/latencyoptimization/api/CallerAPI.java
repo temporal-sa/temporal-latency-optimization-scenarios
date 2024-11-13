@@ -11,7 +11,9 @@ import io.temporal.latencyoptimization.TransactionActivitiesImpl;
 
 import javax.net.ssl.SSLException;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.List;
 
 public class CallerAPI {
     private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
@@ -19,11 +21,13 @@ public class CallerAPI {
     private final WorkerFactory factory;
     private final Worker worker;
     private boolean workerRunning = false;
+    private final WorkflowResultsStore resultsStore;
 
     public CallerAPI() throws FileNotFoundException, SSLException {
         this.client = TemporalClient.get();
         this.factory = WorkerFactory.newInstance(client);
         this.worker = factory.newWorker(TASK_QUEUE);
+        this.resultsStore = new WorkflowResultsStore();
 
         // Register workflow and activities
         worker.registerWorkflowImplementationTypes(TransactionWorkflowImpl.class);
@@ -61,18 +65,49 @@ public class CallerAPI {
             ctx.json(callerAPI.getWorkerStatus());
         });
 
-        // TODO: needs to be POST
-        app.get("/runWorkflow", ctx -> {
-            TransactionRequest txRequest =
-                    new TransactionRequest(
-                            "Bob", "Alice",
-                            1000);
+        // New endpoint to get all workflow results
+        app.get("/workflows", ctx -> {
+            ctx.json(callerAPI.resultsStore.getAllResults());
+        });
 
-            EarlyReturnClient earlyReturnClient = new EarlyReturnClient();
-            WorkflowExecutionResult result = earlyReturnClient.runWorkflowWithUpdateWithStart(
-                    callerAPI.client,
-                    txRequest);
-            ctx.json(result);
+        // New endpoint to get workflow results by ID prefix
+        app.get("/workflows/search", ctx -> {
+            String prefix = ctx.queryParam("prefix");
+            if (prefix == null || prefix.isEmpty()) {
+                ctx.status(400);
+                ctx.json(Map.of("error", "prefix parameter is required"));
+                return;
+            }
+            List<WorkflowExecutionResult> results = callerAPI.resultsStore.getResultsWithIdPrefix(prefix);
+            ctx.json(results);
+        });
+
+        app.post("/runWorkflow", ctx -> {
+            WorkflowRequest request = ctx.bodyAsClass(WorkflowRequest.class);
+            List<WorkflowExecutionResult> results = new ArrayList<>();
+
+            for (int i = 1; i <= request.getIterations(); i++) {
+                TransactionRequest txRequest = new TransactionRequest(
+                        request.getParams().getSourceAccount(),
+                        request.getParams().getTargetAccount(),
+                        request.getParams().getAmount()
+                );
+
+                String workflowId = request.getId() + "-iteration-" + i;
+
+                EarlyReturnClient earlyReturnClient = new EarlyReturnClient();
+                WorkflowExecutionResult result = earlyReturnClient.runWorkflowWithUpdateWithStart(
+                        callerAPI.client,
+                        workflowId,
+                        txRequest
+                );
+
+                // Store each result
+                callerAPI.resultsStore.addResult(result);
+                results.add(result);
+            }
+
+            ctx.json(results);
         });
 
         int port = Integer.parseInt(System.getenv().getOrDefault("CALLER_API_PORT", "7070"));
