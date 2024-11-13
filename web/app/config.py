@@ -16,7 +16,8 @@ def get_config() -> dict:
                 'mtls': {
                     'key_file': os.getenv('TEMPORAL_CONNECTION_MTLS_KEY_FILE'),
                     'cert_chain_file': os.getenv('TEMPORAL_CONNECTION_MTLS_CERT_CHAIN_FILE'),
-                }
+                },
+                'web_port': os.getenv('TEMPORAL_CONNECTION_WEB_PORT')
             },
             'worker': {
                 'task_queue': os.getenv('TEMPORAL_TASK_QUEUE')

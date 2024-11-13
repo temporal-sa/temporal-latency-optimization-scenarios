@@ -154,9 +154,11 @@ def url_utils():
         conn = cfg.get('temporal',{}).get('connection',{})
         target = conn.get('target','')
         ns = conn.get('namespace', '')
+        web_port = conn.get('web_port', '')
 
         if 'localhost' in target.lower():
-            return 'http://localhost:8233/namespaces/{ns}'.format( ns=ns)
+            return 'http://localhost:{web_port}/namespaces/{ns}'.format(
+                web_port=web_port, ns=ns)
         return 'https://cloud.temporal.io/namespaces/{ns}'.format( ns=ns)
 
     def url_for_workflow(id):

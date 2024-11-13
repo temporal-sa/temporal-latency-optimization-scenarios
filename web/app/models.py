@@ -1,6 +1,6 @@
 DEFAULT_WORKFLOW_TYPE = 'TransactionWorkflow'
 SCENARIOS = [
-    {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Normal "Happy Path" Execution'},
+    {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Update-With-Start (regular actvities)'},
     {'id': f"{DEFAULT_WORKFLOW_TYPE}HumanInLoop", 'label': "Require Human-In-Loop Approval"},
     {'id': f"{DEFAULT_WORKFLOW_TYPE}APIDowntime", 'label': "API Downtime (recover on 5th attempt)"},
     {'id': f"{DEFAULT_WORKFLOW_TYPE}RecoverableFailure", 'label': "Bug in Workflow (recoverable failure)",},

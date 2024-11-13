@@ -29,9 +29,10 @@ class TransferLister:
         conn = self.temporal_config.get('temporal',{}).get('connection',{})
         target = conn.get('target', '')
         namespace = conn.get('namespace', '')
+        web_port = conn.get('web_port', '')
 
         if 'localhost' in target.lower():
-            return f'http://localhost:8233/namespaces/{namespace}'
+            return f'http://localhost:{web_port}/namespaces/{namespace}'
         return f'https://cloud.temporal.io/namespaces/{namespace}'
 
     def _get_workflow_url(self, workflow_id: str) -> str:
