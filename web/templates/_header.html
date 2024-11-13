@@ -3,8 +3,10 @@
     <img src='{{ url_for("static", filename="src/images/temporal-cloud.png") }}' alt='Temporal Cloud'/>
   </a> -->
 </div>
-<header class='text-2xl'>
-  <h1>{{app_info.name}}</h1>
+<header class='flex flex-col items-center gap-2 py-8'>
+  <h1 class='font-bold text-4xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent animate-pulse'>
+    {{app_info.name}}
+  </h1>
 </header>
 <div class='corner'>
   <!-- <a href='http://localhost:8233' target='_blank'>

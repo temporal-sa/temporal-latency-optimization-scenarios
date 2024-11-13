@@ -94,7 +94,7 @@ app = cors(app,
 cfg = get_config()
 
 app_info = dict({
-    'name': 'Temporal Money Transfer'
+    'name': 'Temporal Latency Optimization',
 })
 app_info = {**app_info, **cfg}
 app.app_info = app_info

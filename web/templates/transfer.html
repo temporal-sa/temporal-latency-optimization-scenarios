@@ -19,6 +19,12 @@
             const header = document.querySelector('h2')
             if (!header) return;
 
+            // Update main header text to include scenario
+            header.innerHTML = `
+    <span>Latency Results for</span>
+    <span class="text-base text-accent ml-2">${response.scenario || '...'}</span>
+`;
+
             let subheader = document.querySelector('#workflow-progress')
             if (!subheader) {
                 subheader = document.createElement('div')
@@ -171,7 +177,6 @@
 
     <header class='text-2xl flex-auto w-full flex flex-col items-center'>
         <h2 class='text-center w-full flex-auto'>
-            <span>Latency Stats</span>
         </h2>
     </header>
     <div class="overflow-x-auto mt-8">
