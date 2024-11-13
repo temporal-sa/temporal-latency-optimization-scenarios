@@ -65,21 +65,33 @@ public class CallerAPI {
             ctx.json(callerAPI.getWorkerStatus());
         });
 
-        // New endpoint to get all workflow results
+        // Get all workflow results
         app.get("/workflows", ctx -> {
-            ctx.json(callerAPI.resultsStore.getAllResults());
+            List<WorkflowResponse> responses = callerAPI.resultsStore.getAllWorkflowResponses();
+
+            String limit = ctx.queryParam("limit");
+            if (limit != null) {
+                try {
+                    int limitNum = Integer.parseInt(limit);
+                    responses = callerAPI.resultsStore.getRecentWorkflowResponses(limitNum);
+                } catch (NumberFormatException e) {
+                    // Invalid limit parameter, just use all responses
+                }
+            }
+
+            ctx.json(responses);
         });
 
-        // New endpoint to get workflow results by ID prefix
-        app.get("/workflows/search", ctx -> {
-            String prefix = ctx.queryParam("prefix");
-            if (prefix == null || prefix.isEmpty()) {
-                ctx.status(400);
-                ctx.json(Map.of("error", "prefix parameter is required"));
-                return;
+        // Get specific workflow - note the {id} syntax
+        app.get("/workflows/{id}", ctx -> {
+            String workflowId = ctx.pathParam("id");
+            WorkflowResponse response = callerAPI.resultsStore.getWorkflowResponse(workflowId);
+
+            if (response != null) {
+                ctx.json(response);
+            } else {
+                ctx.status(404).result("Workflow not found");
             }
-            List<WorkflowExecutionResult> results = callerAPI.resultsStore.getResultsWithIdPrefix(prefix);
-            ctx.json(results);
         });
 
         app.post("/runWorkflow", ctx -> {
@@ -103,11 +115,13 @@ public class CallerAPI {
                 );
 
                 // Store each result
-                callerAPI.resultsStore.addResult(result);
+                callerAPI.resultsStore.addWorkflowRun(request.getId(), request.getIterations(), result);
                 results.add(result);
             }
 
-            ctx.json(results);
+            // Get the complete workflow response
+            WorkflowResponse response = callerAPI.resultsStore.getWorkflowResponse(request.getId());
+            ctx.json(response);
         });
 
         int port = Integer.parseInt(System.getenv().getOrDefault("CALLER_API_PORT", "7070"));

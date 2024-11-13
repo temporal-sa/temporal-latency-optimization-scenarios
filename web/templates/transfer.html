@@ -5,43 +5,56 @@
 
 <script type='application/javascript'>
     const params = new URLSearchParams(window.location.search)
-    const approvalRequired = params.has('type', 'AccountTransferWorkflowHumanInLoop')
-
     const listen = () => {
         const eventSource = new FetchEventSource(`/sub/{{id}}`);
 
         eventSource.addEventListener('open', () => console.log('SSE Open'));
         eventSource.addEventListener('error', (err) => console.log('SSE Error', err));
         eventSource.addEventListener('message', (e) => {
-            let data = JSON.parse(e.data)
-            console.log('SSE Data received:', data)
+            let response = JSON.parse(e.data)
+            console.log('SSE Data received:', response)
+
+            // Update headers with iteration info
+            const header = document.querySelector('h2')
+            let subheader = document.querySelector('#workflow-progress')
+            if (!subheader) {
+                subheader = document.createElement('div')
+                subheader.id = 'workflow-progress'
+                subheader.className = 'text-base mt-2 text-base-content/70'
+                header.appendChild(subheader)
+            }
+
+            const resultsCount = response?.results?.length || 0
+            const totalIterations = response?.iterations || 0
+            subheader.textContent = `${resultsCount} of ${totalIterations} workflow runs`
 
             // Clear existing table content
             const tbody = document.querySelector('#workflow-results')
 
-            if (!data || data.length === 0) {
-                // Show spinner if no data
+            // Show only spinner if no results yet
+            if (!response || !response.results || response.results.length === 0) {
                 tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center py-12">
-                    <span class="loading loading-spinner loading-lg text-primary"></span>
-                </td>
-            </tr>
-        `
+                <tr>
+                    <td colspan="5" class="text-center py-12">
+                        <span class="loading loading-spinner loading-lg text-primary"></span>
+                    </td>
+                </tr>
+            `
                 return
             }
 
-            // Sort data by iteration number (extracted from workflow ID)
-            data.sort((a, b) => {
+            // Sort results by iteration number
+            const sortedResults = [...response.results].sort((a, b) => {
                 const iterA = parseInt(a.workflowId.split('-iteration-')[1])
                 const iterB = parseInt(b.workflowId.split('-iteration-')[1])
                 return iterA - iterB
             });
 
+            // Start with empty tbody
             tbody.innerHTML = ''
 
-            // Populate table
-            data.forEach((item) => {
+            // Populate table with existing results
+            sortedResults.forEach((item) => {
                 const iteration = item.workflowId.split('-iteration-')[1]
                 const row = document.createElement('tr')
 
@@ -55,22 +68,36 @@
                     Math.round(item.workflowResponseLatencyMs) : 'n/a'
 
                 row.innerHTML = `
-                    <td class="font-mono">${iteration}</td>
-                    <td class="font-mono text-xs">${item.workflowId}</td>
-                    <td class="font-mono ${updateLatency !== 'n/a' ? 'text-accent' : 'text-base-content/50'}">
-                        ${updateLatency}
-                    </td>
-                    <td class="font-mono ${workflowLatency !== 'n/a' ? 'text-accent' : 'text-base-content/50'}">
-                        ${workflowLatency}
-                    </td>
-                    <td class="font-mono text-sm">${executionTime}</td>
-                `
+                <td class="font-mono">${iteration}</td>
+                <td class="font-mono text-xs">${item.workflowId}</td>
+                <td class="font-mono ${updateLatency !== 'n/a' ? 'text-accent' : 'text-base-content/50'}">
+                    ${updateLatency}
+                </td>
+                <td class="font-mono ${workflowLatency !== 'n/a' ? 'text-accent' : 'text-base-content/50'}">
+                    ${workflowLatency}
+                </td>
+                <td class="font-mono text-sm">${executionTime}</td>
+            `
                 tbody.appendChild(row)
             })
+
+            // Add spinner row if we're still waiting for more results
+            if (response.results.length < response.iterations) {
+                const spinnerRow = document.createElement('tr')
+                spinnerRow.innerHTML = `
+                <td colspan="5" class="text-center py-6 bg-base-200/50">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <span class="ml-2 text-base-content/70">Waiting for more results...</span>
+                </td>
+            `
+                tbody.appendChild(spinnerRow)
+            }
         });
     }
 
+    // Only add one event listener
     document.addEventListener("DOMContentLoaded", listen);
+
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/fetch-event-source@1.0.0-alpha.2/index.min.js"></script>
@@ -81,7 +108,7 @@
 
 <div class="flex flex-col gap-8 p-4 rounded-md items-center border border-primary">
 
-    <header class='text-2xl flex-auto w-full flex'>
+    <header class='text-2xl flex-auto w-full flex flex-col items-center'>
         <h2 class='text-center w-full flex-auto'>
             <span>Latency Stats</span>
         </h2>

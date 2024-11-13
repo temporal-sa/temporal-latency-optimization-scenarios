@@ -3,7 +3,6 @@ import string
 import signal
 from asyncio import sleep
 import asyncio
-from typing import cast
 from logging import getLogger
 import sys
 
@@ -12,7 +11,7 @@ from quart import Quart, render_template, g, jsonify, make_response, request, ab
 from quart_cors import cors
 
 # from clients import get_clients
-from temporalio.client import Client
+# from temporalio.client import Client
 from temporalio.service import RPCError
 
 from app.clients import get_clients
@@ -259,11 +258,11 @@ async def sub(workflow_id):
     async def async_generator():
         async with ClientSession() as session:
             while True:
-                print('querying workflow_id prefix: {workflow_id}'.format(workflow_id=workflow_id))
+                # print('querying workflow_id prefix: {workflow_id}'.format(workflow_id=workflow_id))
                 
                 try:
                     async with session.get(
-                        f'http://localhost:{api_port}/workflows/search?prefix={workflow_id}'
+                        f'http://localhost:{api_port}/workflows/{workflow_id}'
                     ) as response:
                         if response.status == 200:
                             workflow_results = await response.json()
