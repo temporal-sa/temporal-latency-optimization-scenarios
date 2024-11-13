@@ -22,7 +22,8 @@ public class WorkflowExecutionResult {
             @JsonProperty("updateResult") TxResult updateResult,
             @JsonProperty("workflowResult") TxResult workflowResult,
             @JsonProperty("executionTimestamp") String executionTimestamp,
-            @JsonProperty("executionStatus") WorkflowExecutionStatus executionStatus) {
+            @JsonProperty("executionStatus") WorkflowExecutionStatus executionStatus,
+            @JsonProperty("workflowUrl") String workflowUrl){
         this.workflowId = workflowId;
         this.updateResponseLatencyMs = updateResponseLatencyMs;
         this.workflowResponseLatencyMs = workflowResponseLatencyMs;
@@ -30,7 +31,7 @@ public class WorkflowExecutionResult {
         this.workflowResult = workflowResult;
         this.executionTimestamp = executionTimestamp;
         this.executionStatus = executionStatus;
-        this.workflowUrl = ServerInfo.getWorkflowUrl(workflowId);
+        this.workflowUrl = workflowUrl;
     }
 
     @JsonProperty("workflowId")
@@ -82,6 +83,7 @@ public class WorkflowExecutionResult {
         private TxResult workflowResult;
         private String executionTimestamp;
         private WorkflowExecutionStatus executionStatus;
+        private String workflowUrl;
 
         public Builder() {
             this.executionTimestamp = java.time.Instant.now().toString();
@@ -118,6 +120,11 @@ public class WorkflowExecutionResult {
             return this;
         }
 
+        public Builder workflowUrl(String url) {
+            this.workflowUrl = url;
+            return this;
+        }
+
         public WorkflowExecutionResult build() {
             return new WorkflowExecutionResult(
                     workflowId,
@@ -126,7 +133,8 @@ public class WorkflowExecutionResult {
                     updateResult,
                     workflowResult,
                     executionTimestamp,
-                    executionStatus
+                    executionStatus,
+                    workflowUrl
             );
         }
     }

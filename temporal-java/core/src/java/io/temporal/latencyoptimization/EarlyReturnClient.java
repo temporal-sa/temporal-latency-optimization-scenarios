@@ -20,6 +20,7 @@
 package io.temporal.latencyoptimization;
 
 import io.temporal.client.*;
+import io.temporal.latencyoptimization.api.ServerInfo;
 import io.temporal.latencyoptimization.api.TemporalClient;
 import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivities;
@@ -44,7 +45,8 @@ public class EarlyReturnClient {
     public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client,
                                                                          String wfType,
                                                                          String id,
-                                                                         TransactionRequest txRequest) {
+                                                                         TransactionRequest txRequest,
+                                                                         ServerInfo serverInfo) {
 
         WorkflowOptions options = buildWorkflowOptions(id);
         String workflowId = options.getWorkflowId();
@@ -81,7 +83,8 @@ public class EarlyReturnClient {
                 .build();
 
         WorkflowExecutionResult.Builder resultBuilder = new WorkflowExecutionResult.Builder()
-                .workflowId(workflowId);
+                .workflowId(workflowId)
+                .workflowUrl(serverInfo.getWorkflowUrl(workflowId));
 
         try {
             // Start timing for overall workflow

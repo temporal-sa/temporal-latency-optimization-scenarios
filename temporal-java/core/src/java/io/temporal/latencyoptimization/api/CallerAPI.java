@@ -12,10 +12,13 @@ import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActiv
 import io.temporal.latencyoptimization.TransactionActivitiesImpl;
 
 import javax.net.ssl.SSLException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.List;
+
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class CallerAPI {
     private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
@@ -24,9 +27,12 @@ public class CallerAPI {
     private final Worker worker;
     private boolean workerRunning = false;
     private final WorkflowResultsStore resultsStore;
+    private final ServerInfo serverInfo;
 
-    public CallerAPI() throws FileNotFoundException, SSLException {
-        this.client = TemporalClient.get();
+    public CallerAPI(ServerInfo serverInfo) throws FileNotFoundException, SSLException {
+        this.serverInfo = serverInfo;
+
+        this.client = TemporalClient.get(serverInfo);
         this.factory = WorkerFactory.newInstance(client);
         this.worker = factory.newWorker(TASK_QUEUE);
         this.resultsStore = new WorkflowResultsStore();
@@ -53,7 +59,36 @@ public class CallerAPI {
     }
 
     public static void main(String[] args) throws FileNotFoundException, SSLException {
-        CallerAPI callerAPI = new CallerAPI();
+        System.out.println("Working directory: " + new File(".").getAbsolutePath());
+        File envFile = new File("../.env");
+        System.out.println(".env file exists: " + envFile.exists());
+
+        Dotenv dotenv = Dotenv.configure()
+                .directory("../")
+                .load();
+
+        System.out.println("=== All loaded env vars ===");
+        dotenv.entries().forEach(entry ->
+                System.out.println(entry.getKey() + ": " + entry.getValue())
+        );
+
+        String namespace = dotenv.get("TEMPORAL_CONNECTION_NAMESPACE");
+        String target = dotenv.get("TEMPORAL_CONNECTION_TARGET");
+        String keyFile = dotenv.get("TEMPORAL_CONNECTION_MTLS_KEY_FILE");
+        String certChainFile = dotenv.get("TEMPORAL_CONNECTION_MTLS_CERT_CHAIN_FILE");
+        String taskQueue = dotenv.get("TEMPORAL_TASK_QUEUE");
+        String callerApiPort = dotenv.get("CALLER_API_PORT");
+        System.out.println("CALLER_API_PORT: " + callerApiPort);
+
+        ServerInfo serverInfo = new ServerInfo.Builder()
+                .namespace(namespace)
+                .address(target)
+                .certPath(certChainFile)
+                .keyPath(keyFile)
+                .taskQueue(taskQueue)
+                .webPort(callerApiPort).build();
+
+        CallerAPI callerAPI = new CallerAPI(serverInfo);
 
         // Start the worker
         callerAPI.startWorker();
@@ -61,7 +96,7 @@ public class CallerAPI {
         Javalin app = Javalin.create();
 
         app.get("/", ctx -> {
-            ctx.json(ServerInfo.getServerInfo());
+            ctx.json(serverInfo.getServerInfo());
         });
 
         app.get("/workerstatus", ctx -> {
@@ -116,7 +151,8 @@ public class CallerAPI {
                         callerAPI.client,
                         wfType,
                         workflowId,
-                        txRequest
+                        txRequest,
+                        callerAPI.serverInfo
                 );
 
                 // Store each result
@@ -130,7 +166,7 @@ public class CallerAPI {
             ctx.json(response);
         });
 
-        int port = Integer.parseInt(System.getenv().getOrDefault("CALLER_API_PORT", "7070"));
+        int port = Integer.parseInt(serverInfo.getWebPort());
         app.start(port);
 
         System.out.println("CallerAPI started on port: " + port);

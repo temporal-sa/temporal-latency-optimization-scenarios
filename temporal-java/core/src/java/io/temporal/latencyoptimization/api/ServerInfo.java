@@ -1,83 +1,125 @@
-/*
- *  Copyright (c) 2020 Temporal Technologies, Inc. All Rights Reserved
- *
- *  Copyright 2012-2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- *  Modifications copyright (C) 2017 Uber Technologies, Inc.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"). You may not
- *  use this file except in compliance with the License. A copy of the License is
- *  located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- *  or in the "license" file accompanying this file. This file is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- *  express or implied. See the License for the specific language governing
- *  permissions and limitations under the License.
- */
-
 package io.temporal.latencyoptimization.api;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ServerInfo {
+    private String certPath;
+    private String keyPath;
+    private String namespace;
+    private String address;
+    private String taskQueue;
+    private String webPort;
 
-    public static String getCertPath() {
-        return System.getenv("TEMPORAL_CONNECTION_MTLS_KEY_FILE") != null ? System.getenv("TEMPORAL_CONNECTION_MTLS_KEY_FILE") : "";
+    private ServerInfo(Builder builder) {
+        this.certPath = builder.certPath;
+        this.keyPath = builder.keyPath;
+        this.namespace = builder.namespace;
+        this.address = builder.address;
+        this.taskQueue = builder.taskQueue;
+        this.webPort = builder.webPort;
     }
 
-    public static String getKeyPath() {
-        return System.getenv("TEMPORAL_CONNECTION_MTLS_CERT_CHAIN_FILE") != null ? System.getenv("TEMPORAL_CONNECTION_MTLS_CERT_CHAIN_FILE") : "";
+    public String getCertPath() {
+        return certPath != null ? certPath : "";
     }
 
-    public static String getNamespace() {
-        String namespace = System.getenv("TEMPORAL_CONNECTION_NAMESPACE");
+    public String getKeyPath() {
+        return keyPath != null ? keyPath : "";
+    }
+
+    public String getNamespace() {
         return namespace != null && !namespace.isEmpty() ? namespace : "default";
     }
 
-    public static String getAddress() {
-        String address = System.getenv("TEMPORAL_CONNECTION_TARGET");
+    public String getAddress() {
         return address != null && !address.isEmpty() ? address : "localhost:7233";
     }
 
-    public static String getWebPort() {
-        String webPort = System.getenv("TEMPORAL_CONNECTION_WEB_PORT");
+    public String getWebPort() {
         return webPort != null && !webPort.isEmpty() ? webPort : "8080";
     }
 
-    public static String getNamespaceUrl() {
-        String address = getAddress();
-        String namespace = getNamespace();
-
-        if (address.toLowerCase().contains("localhost")) {
-            String webPort = getWebPort();
-            return String.format("http://localhost:%s/namespaces/%s", webPort, namespace);
+    public String getNamespaceUrl() {
+        if (getAddress().toLowerCase().contains("localhost")) {
+            return String.format("http://localhost:%s/namespaces/%s", getWebPort(), getNamespace());
         }
-
-        return String.format("https://cloud.temporal.io/namespaces/%s", namespace);
+        return String.format("https://cloud.temporal.io/namespaces/%s", getNamespace());
     }
 
-    public static String getWorkflowUrl(String workflowId) {
+    public String getWorkflowUrl(String workflowId) {
         if (workflowId == null || workflowId.isEmpty()) {
             throw new IllegalArgumentException("Workflow ID cannot be null or empty");
         }
         return String.format("%s/workflows/%s", getNamespaceUrl(), workflowId);
     }
 
-    public static String getTaskqueue() {
-        String taskqueue = System.getenv("TEMPORAL_TASK_QUEUE");
-        return taskqueue != null && !taskqueue.isEmpty() ? taskqueue : "MoneyTransferJava";
+    public String getTaskQueue() {
+        return taskQueue != null && !taskQueue.isEmpty() ? taskQueue : "MoneyTransferJava";
     }
 
-    public static Map<String, String> getServerInfo() {
+    public Map<String, String> getServerInfo() {
         Map<String, String> info = new HashMap<>();
         info.put("certPath", getCertPath());
         info.put("keyPath", getKeyPath());
         info.put("namespace", getNamespace());
         info.put("address", getAddress());
-        info.put("taskQueue", getTaskqueue());
+        info.put("taskQueue", getTaskQueue());
+        info.put("webPort", getWebPort());
         return info;
+    }
+
+    // Builder for ServerInfo
+    public static class Builder {
+        private String certPath;
+        private String keyPath;
+        private String namespace;
+        private String address;
+        private String taskQueue;
+        private String webPort;
+
+        public Builder() {
+            // Optionally load default values from environment variables here
+            this.certPath = System.getenv("TEMPORAL_CONNECTION_MTLS_KEY_FILE");
+            this.keyPath = System.getenv("TEMPORAL_CONNECTION_MTLS_CERT_CHAIN_FILE");
+            this.namespace = System.getenv("TEMPORAL_CONNECTION_NAMESPACE");
+            this.address = System.getenv("TEMPORAL_CONNECTION_TARGET");
+            this.taskQueue = System.getenv("TEMPORAL_TASK_QUEUE");
+            this.webPort = System.getenv("TEMPORAL_CONNECTION_WEB_PORT");
+        }
+
+        public Builder certPath(String certPath) {
+            this.certPath = certPath;
+            return this;
+        }
+
+        public Builder keyPath(String keyPath) {
+            this.keyPath = keyPath;
+            return this;
+        }
+
+        public Builder namespace(String namespace) {
+            this.namespace = namespace;
+            return this;
+        }
+
+        public Builder address(String address) {
+            this.address = address;
+            return this;
+        }
+
+        public Builder taskQueue(String taskQueue) {
+            this.taskQueue = taskQueue;
+            return this;
+        }
+
+        public Builder webPort(String webPort) {
+            this.webPort = webPort;
+            return this;
+        }
+
+        public ServerInfo build() {
+            return new ServerInfo(this);
+        }
     }
 }
