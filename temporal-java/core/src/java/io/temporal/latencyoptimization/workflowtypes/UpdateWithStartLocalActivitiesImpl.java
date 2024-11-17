@@ -32,11 +32,6 @@ import org.slf4j.LoggerFactory;
 public class UpdateWithStartLocalActivitiesImpl implements UpdateWithStartLocalActivities {
   private static final Logger log = LoggerFactory.getLogger(UpdateWithStartLocalActivitiesImpl.class);
 
-  private final TransactionActivities activities =
-          Workflow.newActivityStub(
-                  TransactionActivities.class,
-                  ActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(30)).build());
-
   private final TransactionActivities localActivities =
       Workflow.newLocalActivityStub(
           TransactionActivities.class,
@@ -60,10 +55,10 @@ public class UpdateWithStartLocalActivitiesImpl implements UpdateWithStartLocalA
 
     if (initError != null) {
       // If initialization failed, cancel the transaction
-      activities.cancelTransaction(this.tx);
+      localActivities.cancelTransaction(this.tx);
       return new TxResult("", "Transaction cancelled.");
     } else {
-      activities.completeTransaction(this.tx);
+      localActivities.completeTransaction(this.tx);
       return new TxResult(this.tx.getId(), "Transaction completed successfully.");
     }
   }

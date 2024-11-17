@@ -2,7 +2,7 @@ package io.temporal.latencyoptimization.api;
 
 import io.javalin.Javalin;
 import io.temporal.client.WorkflowClient;
-import io.temporal.latencyoptimization.UpdateWithStartClient;
+import io.temporal.latencyoptimization.WorkflowRunClient;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivitiesImpl;
 import io.temporal.worker.Worker;
@@ -147,7 +147,7 @@ public class CallerAPI {
                 String workflowId = request.getId() + "-iteration-" + i;
                 String wfType = request.getWf_type();
 
-                UpdateWithStartClient earlyReturnClient = new UpdateWithStartClient();
+                WorkflowRunClient earlyReturnClient = new WorkflowRunClient();
 
                 switch (wfType) {
                     case "RegularActivities":

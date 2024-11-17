@@ -28,9 +28,7 @@ import io.temporal.latencyoptimization.transaction.TxResult;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivities;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivities;
 
-import java.util.concurrent.CompletableFuture;
-
-public class UpdateWithStartClient {
+public class WorkflowRunClient {
     private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
     private static final String WORKFLOW_ID_PREFIX = "early-return-workflow-";
 
