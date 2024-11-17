@@ -6,6 +6,7 @@ Results screen for the `Update-With-Start (Local Activities)` scenario:
 ![Latency Result UI](./latency-optimizer-updatewithstartlocal.png)
 
 ### Scenarios
+* Run Workflow (Regular Activities): Runs the workflow in its entirety and returns the result to the client.
 * Update-With-Start (Regular Activities): Demonstrates the "Early Return" pattern. Returns a value to the client from an update before the workflow completes.
 * Update-With-Start (Local Activities): Demonstrates the "Early Return" pattern. Same as Update-With-Start (Regular Activities), but uses a local activity inside the update handler.
 * More scenarios coming soon!

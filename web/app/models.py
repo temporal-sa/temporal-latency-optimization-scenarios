@@ -1,6 +1,7 @@
-DEFAULT_WORKFLOW_TYPE = 'UpdateWithStartRegularActivities'
+DEFAULT_WORKFLOW_TYPE = 'RegularActivities'
 SCENARIOS = [
-    {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Update-With-Start (regular actvities)'},
+    {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Run Workflow (regular activities)'},
+    {'id': 'UpdateWithStartRegularActivities', 'label': 'Update-With-Start (regular activities)'},
     {'id': "UpdateWithStartLocalActivities", 'label': "Update-With-Start (local activities)"},
 ]
 

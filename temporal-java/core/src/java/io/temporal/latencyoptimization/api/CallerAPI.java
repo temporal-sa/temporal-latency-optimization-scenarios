@@ -150,6 +150,15 @@ public class CallerAPI {
                 UpdateWithStartClient earlyReturnClient = new UpdateWithStartClient();
 
                 switch (wfType) {
+                    case "RegularActivities":
+                        result = earlyReturnClient.runWorkflow(
+                                callerAPI.client,
+                                wfType,
+                                workflowId,
+                                txRequest,
+                                callerAPI.serverInfo
+                        );
+                        break;
                     case "UpdateWithStartRegularActivities":
                         result = earlyReturnClient.runWorkflowWithUpdateWithStart(
                                 callerAPI.client,

@@ -19,6 +19,7 @@
 
 package io.temporal.latencyoptimization;
 
+import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.*;
 import io.temporal.latencyoptimization.api.ServerInfo;
 import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
@@ -26,6 +27,8 @@ import io.temporal.latencyoptimization.transaction.TransactionRequest;
 import io.temporal.latencyoptimization.transaction.TxResult;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivities;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivities;
+
+import java.util.concurrent.CompletableFuture;
 
 public class UpdateWithStartClient {
     private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
@@ -40,7 +43,7 @@ public class UpdateWithStartClient {
 //        runWorkflowWithUpdateWithStart(client, "early-return", txRequest);
 //    }
 
-    public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client,
+    public static WorkflowExecutionResult runWorkflow(WorkflowClient client,
                                                                          String wfType,
                                                                          String id,
                                                                          TransactionRequest txRequest,
@@ -49,9 +52,78 @@ public class UpdateWithStartClient {
         WorkflowOptions options = buildWorkflowOptions(id);
         String workflowId = options.getWorkflowId();
 
-        // Map workflow types to their respective classes
-        Class<?> workflowClass;
+        UpdateWithStartRegularActivities workflow = client.newWorkflowStub(UpdateWithStartRegularActivities.class, options);
 
+        System.out.println("Starting workflow");
+
+        WorkflowExecutionResult.Builder resultBuilder = new WorkflowExecutionResult.Builder()
+                .workflowId(workflowId)
+                .workflowUrl(serverInfo.getWorkflowUrl(workflowId));
+
+        try {
+            // Start timing for overall workflow
+            long startTime = System.nanoTime();
+
+            WorkflowExecution workflowHandle =
+                    WorkflowClient.start(workflow::processTransaction, txRequest);
+
+            TxResult workflowResult = WorkflowStub.fromTyped(workflow).getResult(TxResult.class);
+            System.out.println(
+                    "Workflow completed with result: "
+                            + workflowResult.getStatus()
+                            + " (transactionId: "
+                            + workflowResult.getTransactionId()
+                            + ")");
+
+            // Calculate workflow latency
+            double workflowLatencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
+
+            System.out.println(
+                    "Workflow completed with result: "
+                            + workflowResult.getStatus()
+                            + " (transactionId: "
+                            + workflowResult.getTransactionId()
+                            + ")");
+
+            return resultBuilder
+                    .updateResponseLatencyMs(0)
+                    .workflowResponseLatencyMs(workflowLatencyMs)
+                    .updateResult(null)
+                    .workflowResult(workflowResult)
+                    .executionStatus(WorkflowExecutionResult.WorkflowExecutionStatus.COMPLETED)
+                    .build();
+
+        } catch (Exception e) {
+            if (e.getCause() instanceof io.grpc.StatusRuntimeException) {
+                io.grpc.StatusRuntimeException sre = (io.grpc.StatusRuntimeException) e.getCause();
+                System.err.println("Workflow failed with StatusRuntimeException: " + sre.getMessage());
+                System.err.println("Cause: " + e.getCause());
+
+                if (sre.getStatus().getCode() == io.grpc.Status.Code.PERMISSION_DENIED
+                        && sre.getMessage()
+                        .contains("ExecuteMultiOperation API is disabled on this namespace")) {
+                    System.err.println(
+                            "UpdateWithStart requires the ExecuteMultiOperation API to be enabled on this namespace.");
+                }
+            } else {
+                System.err.println("Transaction initialization failed: " + e.getMessage());
+                System.err.println("Cause: " + e.getCause());
+            }
+
+            return resultBuilder
+                    .executionStatus(WorkflowExecutionResult.WorkflowExecutionStatus.FAILED)
+                    .build();
+        }
+    }
+
+    public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client,
+                                                                         String wfType,
+                                                                         String id,
+                                                                         TransactionRequest txRequest,
+                                                                         ServerInfo serverInfo) {
+
+        WorkflowOptions options = buildWorkflowOptions(id);
+        String workflowId = options.getWorkflowId();
 
         System.out.println("Starting workflow with UpdateWithStart");
 
@@ -147,10 +219,6 @@ public class UpdateWithStartClient {
 
         WorkflowOptions options = buildWorkflowOptions(id);
         String workflowId = options.getWorkflowId();
-
-        // Map workflow types to their respective classes
-        Class<?> workflowClass;
-
 
         System.out.println("Starting workflow with UpdateWithStart");
 
