@@ -28,8 +28,8 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UpdateWithStartRegularActivitiesImpl implements UpdateWithStartRegularActivities {
-  private static final Logger log = LoggerFactory.getLogger(UpdateWithStartRegularActivitiesImpl.class);
+public class TransactionWorkflowLocalImpl implements TransactionWorkflowLocal {
+  private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowLocalImpl.class);
   private final TransactionActivities activities =
       Workflow.newActivityStub(
           TransactionActivities.class,

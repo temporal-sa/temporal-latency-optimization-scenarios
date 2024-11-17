@@ -124,8 +124,8 @@
                 const summaryRow = document.createElement('tr');
                 summaryRow.innerHTML = `
             <td colspan="2" class="font-mono font-bold text-right">Average Latency:</td>
-            <td class="text-lg font-mono font-bold ${avgUpdateLatency !== 'n/a' ? 'text-warning' : 'text-base-content/50'}">
-                ${avgUpdateLatency}
+            <td class="text-lg font-mono font-bold ${(!avgUpdateLatency || avgUpdateLatency === 0) ? 'text-base-content/50' : 'text-warning'}">
+                ${!avgUpdateLatency || avgUpdateLatency === 0 ? 'n/a' : avgUpdateLatency}
             </td>
             <td class="text-lg font-mono font-bold ${avgWorkflowLatency !== 'n/a' ? 'text-warning' : 'text-base-content/50'}">
                 ${avgWorkflowLatency}

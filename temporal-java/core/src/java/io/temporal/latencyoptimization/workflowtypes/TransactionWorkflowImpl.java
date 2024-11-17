@@ -19,7 +19,6 @@
 
 package io.temporal.latencyoptimization.workflowtypes;
 
-import io.temporal.activity.ActivityOptions;
 import io.temporal.activity.LocalActivityOptions;
 import io.temporal.latencyoptimization.transaction.Transaction;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
@@ -29,8 +28,8 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UpdateWithStartLocalActivitiesImpl implements UpdateWithStartLocalActivities {
-  private static final Logger log = LoggerFactory.getLogger(UpdateWithStartLocalActivitiesImpl.class);
+public class TransactionWorkflowImpl implements TransactionWorkflow {
+  private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowImpl.class);
 
   private final TransactionActivities localActivities =
       Workflow.newLocalActivityStub(

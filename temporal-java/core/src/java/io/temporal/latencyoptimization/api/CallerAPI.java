@@ -4,10 +4,10 @@ import io.javalin.Javalin;
 import io.temporal.client.WorkflowClient;
 import io.temporal.latencyoptimization.WorkflowRunClient;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
-import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivitiesImpl;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowImpl;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
-import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivitiesImpl;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowLocalImpl;
 import io.temporal.latencyoptimization.workflowtypes.TransactionActivitiesImpl;
 
 import javax.net.ssl.SSLException;
@@ -37,8 +37,8 @@ public class CallerAPI {
         this.resultsStore = new WorkflowResultsStore();
 
         // Register workflow and activities
-        worker.registerWorkflowImplementationTypes(UpdateWithStartRegularActivitiesImpl.class,
-                UpdateWithStartLocalActivitiesImpl.class);
+        worker.registerWorkflowImplementationTypes(TransactionWorkflowLocalImpl.class,
+                TransactionWorkflowImpl.class);
         worker.registerActivitiesImplementations(new TransactionActivitiesImpl());
     }
 
@@ -168,8 +168,26 @@ public class CallerAPI {
                                 callerAPI.serverInfo
                         );
                         break;
+                    case "LocalActivities":
+                        result = earlyReturnClient.runWorkflowLocal(
+                                callerAPI.client,
+                                wfType,
+                                workflowId,
+                                txRequest,
+                                callerAPI.serverInfo
+                        );
+                        break;
                     case "UpdateWithStartLocalActivities":
                         result = earlyReturnClient.runWorkflowWithUpdateWithStartLocal(
+                                callerAPI.client,
+                                wfType,
+                                workflowId,
+                                txRequest,
+                                callerAPI.serverInfo
+                        );
+                        break;
+                    case "EagerLocalActivities":
+                        result = earlyReturnClient.runWorkflowLocal(
                                 callerAPI.client,
                                 wfType,
                                 workflowId,

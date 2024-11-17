@@ -1,8 +1,10 @@
 DEFAULT_WORKFLOW_TYPE = 'RegularActivities'
 SCENARIOS = [
-    {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Run Workflow (regular activities)'},
+    {'id': DEFAULT_WORKFLOW_TYPE, 'label': 'Workflow Start (regular activities)'},
     {'id': 'UpdateWithStartRegularActivities', 'label': 'Update-With-Start (regular activities)'},
+    {'id': 'LocalActivities', 'label': 'Workflow Start (local activities)'},
     {'id': "UpdateWithStartLocalActivities", 'label': "Update-With-Start (local activities)"},
+    {'id': "EagerLocalActivities", 'label': "Eager Workflow Start (local activities)"},
 ]
 
 ACCOUNT_TYPES = [

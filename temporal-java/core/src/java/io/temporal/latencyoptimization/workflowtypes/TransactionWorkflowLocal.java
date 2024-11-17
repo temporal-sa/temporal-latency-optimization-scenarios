@@ -26,7 +26,7 @@ import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 
 @WorkflowInterface
-public interface UpdateWithStartLocalActivities {
+public interface TransactionWorkflowLocal {
   @WorkflowMethod
   TxResult processTransaction(TransactionRequest txRequest);
 
