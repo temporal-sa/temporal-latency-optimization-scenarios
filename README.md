@@ -8,6 +8,7 @@ Results screen for the `Update-With-Start (Local Activities)` scenario:
 ### Scenarios
 * Update-With-Start (Regular Activities): Demonstrates the "Early Return" pattern. Returns a value to the client from an update before the workflow completes.
 * Update-With-Start (Local Activities): Demonstrates the "Early Return" pattern. Same as Update-With-Start (Regular Activities), but uses a local activity inside the update handler.
+* More scenarios coming soon!
 
 ### Setup
 1. Ensure you have a Temporal Service running. You can use the Temporal Cloud or run a local instance (`brew install temporal && temporal server start-dev`).
