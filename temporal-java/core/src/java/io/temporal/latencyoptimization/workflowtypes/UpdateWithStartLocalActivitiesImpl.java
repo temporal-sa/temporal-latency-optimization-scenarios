@@ -21,10 +21,9 @@ package io.temporal.latencyoptimization.workflowtypes;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.activity.LocalActivityOptions;
-import io.temporal.latencyoptimization.Transaction;
-import io.temporal.latencyoptimization.TransactionActivities;
-import io.temporal.latencyoptimization.TransactionRequest;
-import io.temporal.latencyoptimization.TxResult;
+import io.temporal.latencyoptimization.transaction.Transaction;
+import io.temporal.latencyoptimization.transaction.TransactionRequest;
+import io.temporal.latencyoptimization.transaction.TxResult;
 import io.temporal.workflow.Workflow;
 import java.time.Duration;
 import org.slf4j.Logger;

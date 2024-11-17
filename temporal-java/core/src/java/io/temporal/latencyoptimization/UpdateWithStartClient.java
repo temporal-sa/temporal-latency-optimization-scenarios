@@ -21,15 +21,13 @@ package io.temporal.latencyoptimization;
 
 import io.temporal.client.*;
 import io.temporal.latencyoptimization.api.ServerInfo;
-import io.temporal.latencyoptimization.api.TemporalClient;
 import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
+import io.temporal.latencyoptimization.transaction.TransactionRequest;
+import io.temporal.latencyoptimization.transaction.TxResult;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartRegularActivities;
 import io.temporal.latencyoptimization.workflowtypes.UpdateWithStartLocalActivities;
 
-import javax.net.ssl.SSLException;
-import java.io.FileNotFoundException;
-
-public class EarlyReturnClient {
+public class UpdateWithStartClient {
     private static final String TASK_QUEUE = System.getenv().getOrDefault("TEMPORAL_TASK_QUEUE", "LatencyOptimization");
     private static final String WORKFLOW_ID_PREFIX = "early-return-workflow-";
 

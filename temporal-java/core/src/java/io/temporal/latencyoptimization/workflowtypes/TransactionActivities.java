@@ -17,10 +17,12 @@
  *  permissions and limitations under the License.
  */
 
-package io.temporal.latencyoptimization;
+package io.temporal.latencyoptimization.workflowtypes;
 
 import io.temporal.activity.ActivityInterface;
 import io.temporal.activity.ActivityMethod;
+import io.temporal.latencyoptimization.transaction.Transaction;
+import io.temporal.latencyoptimization.transaction.TransactionRequest;
 
 @ActivityInterface
 public interface TransactionActivities {

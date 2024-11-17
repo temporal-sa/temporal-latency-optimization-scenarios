@@ -19,8 +19,8 @@
 
 package io.temporal.latencyoptimization.workflowtypes;
 
-import io.temporal.latencyoptimization.TransactionRequest;
-import io.temporal.latencyoptimization.TxResult;
+import io.temporal.latencyoptimization.transaction.TransactionRequest;
+import io.temporal.latencyoptimization.transaction.TxResult;
 import io.temporal.workflow.UpdateMethod;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;

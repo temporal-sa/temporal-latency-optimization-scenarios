@@ -17,9 +17,11 @@
  *  permissions and limitations under the License.
  */
 
-package io.temporal.latencyoptimization;
+package io.temporal.latencyoptimization.workflowtypes;
 
 import io.temporal.failure.ApplicationFailure;
+import io.temporal.latencyoptimization.transaction.Transaction;
+import io.temporal.latencyoptimization.transaction.TransactionRequest;
 
 public class TransactionActivitiesImpl implements TransactionActivities {
 

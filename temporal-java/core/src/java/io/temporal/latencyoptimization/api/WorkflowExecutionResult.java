@@ -2,7 +2,7 @@ package io.temporal.latencyoptimization.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.temporal.latencyoptimization.TxResult;
+import io.temporal.latencyoptimization.transaction.TxResult;
 
 public class WorkflowExecutionResult {
     private final String workflowId;
