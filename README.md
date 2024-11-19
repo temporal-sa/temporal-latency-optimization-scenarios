@@ -10,7 +10,7 @@ Results screen for the `Update-With-Start (Local Activities)` scenario:
 * Run Workflow (Regular Activities): Runs the workflow in its entirety but uses local activities and returns the result to the client.
 * Update-With-Start (Regular Activities): Demonstrates the "Early Return" pattern. Returns a value to the client from an update before the workflow completes.
 * Update-With-Start (Local Activities): Demonstrates the "Early Return" pattern. Same as Update-With-Start (Regular Activities), but uses a local activity inside the update handler.
-* Eager Workflow Start: runs the workflow in its [entirety eagerly](https://temporal.io/blog/improving-latency-with-eager-workflow-start) with local activities and returns the result to the client.
+* Eager Workflow Start: runs the workflow in its entirety [eagerly](https://temporal.io/blog/improving-latency-with-eager-workflow-start) with local activities and returns the result to the client.
 
 ### Setup
 1. Ensure you have a Temporal Service running. You can use the Temporal Cloud or run a local instance (`brew install temporal && temporal server start-dev`).
