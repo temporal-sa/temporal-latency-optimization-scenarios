@@ -26,6 +26,7 @@ import io.temporal.latencyoptimization.api.WorkflowExecutionResult;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
 import io.temporal.latencyoptimization.transaction.TxResult;
 import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowLocal;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowLocalBeforeUpdate;
 import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflow;
 
 public class WorkflowRunClient {
@@ -41,7 +42,7 @@ public class WorkflowRunClient {
 //        runWorkflowWithUpdateWithStart(client, "early-return", txRequest);
 //    }
 
-    public static WorkflowExecutionResult runWorkflow(WorkflowClient client,
+    public static WorkflowExecutionResult runWorkflowLocal(WorkflowClient client,
                                                                          String wfType,
                                                                          String id,
                                                                          TransactionRequest txRequest,
@@ -114,7 +115,7 @@ public class WorkflowRunClient {
         }
     }
 
-    public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client,
+    public static WorkflowExecutionResult runWorkflowWithUpdateWithStartLocal(WorkflowClient client,
                                                                          String wfType,
                                                                          String id,
                                                                          TransactionRequest txRequest,
@@ -123,10 +124,10 @@ public class WorkflowRunClient {
         WorkflowOptions options = buildWorkflowOptions(id, false);
         String workflowId = options.getWorkflowId();
 
-        System.out.println("Starting workflow with UpdateWithStart");
+        System.out.println("Starting workflow with UpdateWithStart and some local activities");
 
         // Create the workflow stub dynamically based on workflowClass
-        TransactionWorkflowLocal workflow = client.newWorkflowStub(TransactionWorkflowLocal.class, options);
+        TransactionWorkflowLocalBeforeUpdate workflow = client.newWorkflowStub(TransactionWorkflowLocalBeforeUpdate.class, options);
 
         // Prepare the Update-With-Start operation
         UpdateWithStartWorkflowOperation<TxResult> updateOp =
@@ -208,7 +209,7 @@ public class WorkflowRunClient {
         }
     }
 
-    public static WorkflowExecutionResult runWorkflowLocal(WorkflowClient client,
+    public static WorkflowExecutionResult runWorkflow(WorkflowClient client,
                                                       String wfType,
                                                       String id,
                                                       TransactionRequest txRequest,
@@ -284,7 +285,7 @@ public class WorkflowRunClient {
     }
 
     // TODO: Fix lots of duplicate code shared with the above method
-    public static WorkflowExecutionResult runWorkflowWithUpdateWithStartLocal(WorkflowClient client,
+    public static WorkflowExecutionResult runWorkflowWithUpdateWithStart(WorkflowClient client,
                                                                          String wfType,
                                                                          String id,
                                                                          TransactionRequest txRequest,

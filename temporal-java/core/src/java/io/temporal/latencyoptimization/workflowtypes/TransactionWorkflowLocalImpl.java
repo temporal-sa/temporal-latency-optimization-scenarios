@@ -19,7 +19,7 @@
 
 package io.temporal.latencyoptimization.workflowtypes;
 
-import io.temporal.activity.ActivityOptions;
+import io.temporal.activity.LocalActivityOptions;
 import io.temporal.latencyoptimization.transaction.Transaction;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
 import io.temporal.latencyoptimization.transaction.TxResult;
@@ -30,10 +30,11 @@ import org.slf4j.LoggerFactory;
 
 public class TransactionWorkflowLocalImpl implements TransactionWorkflowLocal {
   private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowLocalImpl.class);
-  private final TransactionActivities activities =
-      Workflow.newActivityStub(
+
+  private final TransactionActivities localActivities =
+      Workflow.newLocalActivityStub(
           TransactionActivities.class,
-          ActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(30)).build());
+          LocalActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(30)).build());
 
   private boolean initDone = false;
   private Transaction tx;
@@ -41,10 +42,10 @@ public class TransactionWorkflowLocalImpl implements TransactionWorkflowLocal {
 
   @Override
   public TxResult processTransaction(TransactionRequest txRequest) {
-    this.tx = activities.mintTransactionId(txRequest);
+    this.tx = localActivities.mintTransactionId(txRequest);
 
     try {
-      this.tx = activities.initTransaction(this.tx);
+      this.tx = localActivities.initTransaction(this.tx);
     } catch (Exception e) {
       initError = e;
     } finally {
@@ -53,10 +54,10 @@ public class TransactionWorkflowLocalImpl implements TransactionWorkflowLocal {
 
     if (initError != null) {
       // If initialization failed, cancel the transaction
-      activities.cancelTransaction(this.tx);
+      localActivities.cancelTransaction(this.tx);
       return new TxResult("", "Transaction cancelled.");
     } else {
-      activities.completeTransaction(this.tx);
+      localActivities.completeTransaction(this.tx);
       return new TxResult(this.tx.getId(), "Transaction completed successfully.");
     }
   }

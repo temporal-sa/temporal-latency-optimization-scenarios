@@ -20,6 +20,7 @@
 package io.temporal.latencyoptimization.workflowtypes;
 
 import io.temporal.activity.ActivityOptions;
+import io.temporal.activity.LocalActivityOptions;
 import io.temporal.latencyoptimization.transaction.Transaction;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
 import io.temporal.latencyoptimization.transaction.TxResult;
@@ -28,8 +29,14 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransactionWorkflowImpl implements TransactionWorkflow {
-  private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowImpl.class);
+public class TransactionWorkflowLocalBeforeUpdateImpl implements TransactionWorkflowLocalBeforeUpdate {
+  private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowLocalBeforeUpdateImpl.class);
+
+  private final TransactionActivities localActivities =
+      Workflow.newLocalActivityStub(
+          TransactionActivities.class,
+          LocalActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(30)).build());
+
   private final TransactionActivities activities =
       Workflow.newActivityStub(
           TransactionActivities.class,
@@ -41,10 +48,10 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
 
   @Override
   public TxResult processTransaction(TransactionRequest txRequest) {
-    this.tx = activities.mintTransactionId(txRequest);
+    this.tx = localActivities.mintTransactionId(txRequest);
 
     try {
-      this.tx = activities.initTransaction(this.tx);
+      this.tx = localActivities.initTransaction(this.tx);
     } catch (Exception e) {
       initError = e;
     } finally {

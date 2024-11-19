@@ -4,10 +4,11 @@ import io.javalin.Javalin;
 import io.temporal.client.WorkflowClient;
 import io.temporal.latencyoptimization.WorkflowRunClient;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
-import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowImpl;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowLocalImpl;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
-import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowLocalImpl;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowImpl;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowLocalBeforeUpdateImpl;
 import io.temporal.latencyoptimization.workflowtypes.TransactionActivitiesImpl;
 
 import javax.net.ssl.SSLException;
@@ -37,8 +38,9 @@ public class CallerAPI {
         this.resultsStore = new WorkflowResultsStore();
 
         // Register workflow and activities
-        worker.registerWorkflowImplementationTypes(TransactionWorkflowLocalImpl.class,
-                TransactionWorkflowImpl.class);
+        worker.registerWorkflowImplementationTypes(TransactionWorkflowImpl.class,
+                TransactionWorkflowLocalImpl.class,
+                TransactionWorkflowLocalBeforeUpdateImpl.class);
         worker.registerActivitiesImplementations(new TransactionActivitiesImpl());
     }
 
@@ -144,14 +146,12 @@ public class CallerAPI {
 
                 WorkflowExecutionResult result = null;
 
-                String workflowId = request.getId() + "-iteration-" + i;
                 String wfType = request.getWf_type();
-
-                WorkflowRunClient earlyReturnClient = new WorkflowRunClient();
+                String workflowId = request.getId() + "-"+ wfType+ "-iteration-" + i;
 
                 switch (wfType) {
                     case "RegularActivities":
-                        result = earlyReturnClient.runWorkflow(
+                        result = WorkflowRunClient.runWorkflow(
                                 callerAPI.client,
                                 wfType,
                                 workflowId,
@@ -160,7 +160,7 @@ public class CallerAPI {
                         );
                         break;
                     case "UpdateWithStartRegularActivities":
-                        result = earlyReturnClient.runWorkflowWithUpdateWithStart(
+                        result = WorkflowRunClient.runWorkflowWithUpdateWithStart(
                                 callerAPI.client,
                                 wfType,
                                 workflowId,
@@ -169,7 +169,7 @@ public class CallerAPI {
                         );
                         break;
                     case "LocalActivities":
-                        result = earlyReturnClient.runWorkflowLocal(
+                        result = WorkflowRunClient.runWorkflowLocal(
                                 callerAPI.client,
                                 wfType,
                                 workflowId,
@@ -178,7 +178,7 @@ public class CallerAPI {
                         );
                         break;
                     case "UpdateWithStartLocalActivities":
-                        result = earlyReturnClient.runWorkflowWithUpdateWithStartLocal(
+                        result = WorkflowRunClient.runWorkflowWithUpdateWithStartLocal(
                                 callerAPI.client,
                                 wfType,
                                 workflowId,
@@ -187,7 +187,7 @@ public class CallerAPI {
                         );
                         break;
                     case "EagerLocalActivities":
-                        result = earlyReturnClient.runWorkflowLocal(
+                        result = WorkflowRunClient.runWorkflowLocal(
                                 callerAPI.client,
                                 wfType,
                                 workflowId,

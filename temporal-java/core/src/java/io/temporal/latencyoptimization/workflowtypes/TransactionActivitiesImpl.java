@@ -31,6 +31,7 @@ public class TransactionActivitiesImpl implements TransactionActivities {
     // Simulate transaction ID generation
     String txId = "TXID" + String.format("%010d", (long) (Math.random() * 1_000_000_0000L));
 
+    sleep(10);
     System.out.println("Transaction ID minted: " + txId);
     return new Transaction(
         txId, request.getSourceAccount(), request.getTargetAccount(), request.getAmount());
@@ -38,6 +39,7 @@ public class TransactionActivitiesImpl implements TransactionActivities {
 
   @Override
   public Transaction initTransaction(Transaction tx) {
+    sleep(10);
     System.out.println("Initializing transaction");
 
     if (tx.getAmount() <= 0) {
@@ -53,12 +55,13 @@ public class TransactionActivitiesImpl implements TransactionActivities {
   @Override
   public void cancelTransaction(Transaction tx) {
     System.out.println("Cancelling transaction");
-
+    sleep(10);
     System.out.println("Transaction cancelled");
   }
 
   @Override
   public void completeTransaction(Transaction tx) {
+    sleep(100);
     System.out.println(
         "Sending $"
             + tx.getAmount()
