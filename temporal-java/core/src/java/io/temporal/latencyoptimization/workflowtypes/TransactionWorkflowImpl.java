@@ -23,6 +23,7 @@ import io.temporal.activity.ActivityOptions;
 import io.temporal.latencyoptimization.transaction.Transaction;
 import io.temporal.latencyoptimization.transaction.TransactionRequest;
 import io.temporal.latencyoptimization.transaction.TxResult;
+//import io.temporal.latencyoptimization.transaction.TransactionHelper;
 import io.temporal.workflow.Workflow;
 import java.time.Duration;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 public class TransactionWorkflowImpl implements TransactionWorkflow {
   private static final Logger log = LoggerFactory.getLogger(TransactionWorkflowImpl.class);
-  private final TransactionActivities activities =
+  public final TransactionActivities activities =
       Workflow.newActivityStub(
           TransactionActivities.class,
           ActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(30)).build());
@@ -51,14 +52,17 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
       initDone = true; // Will unblock the early-return returnInitResult method
     }
 
-    if (initError != null) {
-      // If initialization failed, cancel the transaction
-      activities.cancelTransaction(this.tx);
-      return new TxResult("", "Transaction cancelled.");
-    } else {
-      activities.completeTransaction(this.tx);
-      return new TxResult(this.tx.getId(), "Transaction completed successfully.");
-    }
+    
+    // if (initError != null) {
+    //     // If initialization failed, cancel the transaction
+    //     activities.cancelTransaction(this.tx);
+    //     return new TxResult("", "Transaction cancelled.");
+    //   } else {
+    //     activities.completeTransaction(this.tx);
+    //     return new TxResult(this.tx.getId(), "Transaction completed successfully.");
+    //   }
+
+    return this.tx.finalizeTransaction(activities, txRequest, tx, initError);
   }
 
   @Override
@@ -73,4 +77,6 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
     return new TxResult(
         tx.getId(), "Initialization successful"); // Return the update result to the caller
   }
+
+  
 }

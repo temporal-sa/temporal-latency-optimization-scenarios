@@ -22,6 +22,9 @@ package io.temporal.latencyoptimization.transaction;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.temporal.latencyoptimization.workflowtypes.TransactionActivities;
+import io.temporal.latencyoptimization.workflowtypes.TransactionWorkflowImpl;
+
 public final class Transaction {
   private final String id;
   private final String sourceAccount;
@@ -65,5 +68,27 @@ public final class Transaction {
     return String.format(
         "Transaction{id='%s', sourceAccount='%s', targetAccount='%s', amount=%d}",
         id, sourceAccount, targetAccount, amount);
+  }
+
+  public TxResult finalizeTransaction(TransactionActivities activities, TransactionRequest txRequest, Transaction tx, Exception initError) {
+    if (initError != null) {
+        // If initialization failed, cancel the transaction
+        activities.cancelTransaction(tx);
+        return new TxResult("", "Transaction cancelled.");
+      } else {
+        activities.completeTransaction(tx);
+        return new TxResult(tx.getId(), "Transaction completed successfully.");
+      }
+  }
+
+  public TxResult initTransaction(TransactionActivities activities, TransactionRequest txRequest, Transaction tx, Exception initError) {
+    if (initError != null) {
+        // If initialization failed, cancel the transaction
+        activities.cancelTransaction(tx);
+        return new TxResult("", "Transaction cancelled.");
+      } else {
+        activities.completeTransaction(tx);
+        return new TxResult(tx.getId(), "Transaction completed successfully.");
+      }
   }
 }

@@ -58,14 +58,7 @@ public class TransactionWorkflowLocalBeforeUpdateImpl implements TransactionWork
       initDone = true; // Will unblock the early-return returnInitResult method
     }
 
-    if (initError != null) {
-      // If initialization failed, cancel the transaction
-      activities.cancelTransaction(this.tx);
-      return new TxResult("", "Transaction cancelled.");
-    } else {
-      activities.completeTransaction(this.tx);
-      return new TxResult(this.tx.getId(), "Transaction completed successfully.");
-    }
+    return this.tx.finalizeTransaction(activities, txRequest, tx, initError);
   }
 
   @Override
