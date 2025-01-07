@@ -28,5 +28,5 @@ just run_temporal_go
 ```
 3) Run the following command to start the example
 ```bash
-just run_tempora_gostarter
+just run_temporal_gostarter
 ```
