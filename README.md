@@ -39,7 +39,7 @@ unset TEMPORAL_TASK_QUEUE TEMPORAL_CONNECTION_NAMESPACE TEMPORAL_CONNECTION_TARG
 
 
 ### Go Workflows
-The above workflows are implemented in Java. Go implementations are included for your benefit, see [the goalang readme](./temporal-go/README.md).
+The above workflows are implemented in Java. Go implementations are included for your benefit, see the [golang samples readme](./temporal-go/README.md).
 In testing Go was about 8% faster than Java. 
 
 This was with about 30 ms of latency from a remote lab to AWS us-east-1, so with lower latency Go's faster speed would be more pronounced.
