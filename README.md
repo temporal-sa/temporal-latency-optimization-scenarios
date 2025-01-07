@@ -20,11 +20,11 @@ Results screen for the `Update-With-Start (Local Activities)` scenario:
 5. Copy the `.env.template` file to `.env` and update the values as needed.
 
 ### Enable Pre-Release Features
-1. You may need to enable Update, Update With Start, and Eager Workflow Start
+1. You may need to enable Eager Workflow Start
 2. For Cloud, reach out to your account team
-3. For local testing, add these to your `temporal server start-dev`:
+3. For local testing, add this to your `temporal server start-dev`:
 
-    `--dynamic-config-value frontend.enableUpdateWorkflowExecutionAsyncAccepted=true --dynamic-config-value frontend.enableUpdateWorkflowExecution=true --dynamic-config-value frontend.enableExecuteMultiOperation=true --dynamic-config-value system.enableEagerWorkflowStart=true`
+    `--dynamic-config-value system.enableEagerWorkflowStart=true`
 
 ### Running the Scenarios
 Before running any `just` commands, ensure your environment is clean by unsetting any existing Temporal environment variables:
@@ -36,3 +36,10 @@ unset TEMPORAL_TASK_QUEUE TEMPORAL_CONNECTION_NAMESPACE TEMPORAL_CONNECTION_TARG
 1. Start the web server: `just run_web`.
 2. Start the Temporal worker: `just run_temporal`.
 3. Navigate to the web server in your browser (default is `http://0.0.0.0:5178`).
+
+
+### Go Workflows
+The above workflows are implemented in Java. Go implementations are included for your benefit, see [the goalang readme](./temporal-go/README.md).
+In testing Go was about 8% faster than Java. 
+
+This was with about 30 ms of latency from a remote lab to AWS us-east-1, so with lower latency Go's faster speed would be more pronounced.
